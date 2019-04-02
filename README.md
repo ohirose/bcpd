@@ -26,7 +26,7 @@ Type the following command in the DOS prompt:
 Brief instructions are printed by typing `bcpd -v` in the terminal window.
 The binary file can also be executed using `system` function in MATLAB.
 See MATLAB scripts in the `demo` folder about the usage of the binary file.
-The binary file was compiled by GCC included in the 32-bit version of the MinGW system,
+The binary file was compiled by GCC included in the 32-bit version of the MinGW system.
 
 ### Terms and symbols
 
