@@ -6,10 +6,12 @@ accelerations based on the Nystrom method and the KD tree search. The BCPD is an
 point drift (CPD) [Myronenko and Song, 2010], and the main difference between them lies in their
 formulations. The BCPD unifies non-rigid and similarity transformations, and thereby,
 the BCPD is often robust against the rotation of target shape. The details of the algorithm are
-available at XXX. Currently, we distribute the windows version only.
+available in a paper titled "A Bayesian formulation of the coherent point drift" (under review).
+Currently, we distribute the windows version only.
 
 ## Demo
 
+Demo movies are available [here](https://youtu.be/3sDNes4n_RY).
 If you are a MATLAB user, demo codes can be executed in the command window of MATLAB.
 
 - Start MATLAB.
