@@ -4,7 +4,7 @@
 This is an implementation of a point matching algorithm, Bayesian coherent point drift (BCPD), with
 accelerations based on the Nystrom method and the KD tree search. The BCPD is an extension of the coherent
 point drift (CPD) [Myronenko and Song, 2010], and the main difference between them lies in their
-formulations. The BCPD unifies non-rigid transformation and similarity transformation, and thereby,
+formulations. The BCPD unifies non-rigid and similarity transformations, and thereby,
 the BCPD is often robust against the rotation of target shape. The details of the algorithm are
 available at XXX. Currently, we distribute the windows version only.
 
@@ -31,7 +31,7 @@ The binary file was compiled by GCC included in the 32-bit version of the MinGW 
 ### Terms and symbols
 
 - X: Target point set. The point set corresponding to the reference shape.
-- Y: Source point set. The point set to be deformed.
+- Y: Source point set. The point set to be deformed. The mth point in Y is denoted by ym.
 - N: The number of points in the target point set.
 - M: The number of points in the source point set.
 - D: Dimension of the space in which the source and target point sets are embedded.
@@ -59,7 +59,7 @@ will be used if they are not specified.
 - `-g [real]`: Gamma. Positive. It defines the randomness of the point matching during the early stage of the optimization.
 
 The expected length that is controlled by lambda equals to`sqrt((1/lambda)*D)`.
-The BCPD is a unified framework of non-rigid transformation and rigid transformation.
+The BCPD is a unified framework of non-rigid and similarity transformations.
 If lambda (-l) is set to a large value, the BCPD solves rigid registration problems.
 If point sets to be registered are smooth surfaces of 3D models, set `-w 0`.
 If your target point set is largely rotated, set gamma around
@@ -68,10 +68,11 @@ If your target point set is largely rotated, set gamma around
 ### Kernel functions
 
 - `-G [1-2]`: Switch kernel functions. The Gaussian kernel `exp(-||ym-ym'||^2/2*beta^2)` is used unless specified.
-  - `-G1` Inverse multiquadric: `sqrt(||ym-ym'||^2+beta^2)`
+  - `-G1` Inverse multiquadric: `(||ym-ym'||^2+beta^2)^(-1/2)`
   - `-G2` Rational quadratic: `1-||ym-ym'||/(||ym-ym'||+beta^2)`
 - `-b [real]`: Beta. Tuning parameter of the kernel functions.
 
+Here, ym represents the mth point in Y.
 The kernel and its tuning parameter, beta, controls the directional correlation of displacement
 vectors. If the kernel is Gaussian, the expected length of displacement vectors is controlled
 by lambda regardless of beta. The expected length equals to sqrt(D/lambda).
