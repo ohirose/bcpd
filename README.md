@@ -43,8 +43,8 @@ The binary file was compiled by GCC included in the 32-bit version of the MinGW 
 - 1st argument (specified by `-x`): The target shape represented as a matrix of size N x D.
 - 2nd argument (specified by `-y`): The source shape represented as a matrix of size M x D.
 
-Currently, only tab- and comma-separated files are accepted, and the extensions of input files
-MUST be `.txt`. If your file is space-delimited, convert it to tab- or comma-separated using Excel,
+Currently, only tab-separated files are accepted, and the extensions of input files
+MUST be `.txt`. If your file is space-delimited, convert it to tab-separated using Excel,
 MATLAB or R, for example. If the file names of target and source point sets are `X.txt` and `Y.txt`,
 these arguments can be omitted.
 
