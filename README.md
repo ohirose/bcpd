@@ -32,7 +32,7 @@ Demo movies are available [here](https://youtu.be/jfylrGscQeI).
 If you are a MATLAB user, demo codes can be executed in the command window of MATLAB.
 
 - Download the datasets required for demos, which are available
-  [HERE](https://www.dropbox.com/s/15yndzh9i69jazy/bcpd-demodata20191025.tgz?dl=1).
+  [HERE](https://www.dropbox.com/s/ni0tqzbrd8e5juz/bcpd-demodata20191025.zip?dl=1).
 - Decompress and move the datasets into the `data` folder in this software.
 - Start MATLAB.
 - Go to the `demo` folder in the MATLAB environment.
