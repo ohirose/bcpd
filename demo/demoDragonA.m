@@ -16,7 +16,7 @@ K   ='50';
 J   ='300';
 e   ='.25';
 c   ='1e-6';
-n   ='500';
+n   ='90';
 %% execution
 prm1=sprintf('-w%s -b%s -l%s -g%s',omg,bet,lmd,gma);
 prm2=sprintf('-J%s -K%s -p',J,K);
