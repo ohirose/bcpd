@@ -17,7 +17,7 @@ J   ='300';
 f   ='0.3';
 c   ='1e-6';
 n   ='500';
-nrm ='ec';
+nrm ='e';
 dwn ='b,5000,0.02bv';
 %% execution
 prm1=sprintf('-w%s -b%s -l%s -g%s',omg,bet,lmd,gma);

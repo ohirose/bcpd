@@ -32,7 +32,7 @@ Demo movies are available [here](https://youtu.be/jfylrGscQeI).
 If you are a MATLAB user, demo codes can be executed in the command window of MATLAB.
 
 - Download the datasets required for demos, which are available
-  [HERE](https://www.dropbox.com/s/ni0tqzbrd8e5juz/bcpd-demodata20191025.zip?dl=1).
+  [HERE](https://www.dropbox.com/s/6kd4uiyt150uyz9/bcpd-demodata20200127.zip?dl=1).
 - Decompress and move the datasets into the `data` folder in this software.
 - Start MATLAB.
 - Go to the `demo` folder in the MATLAB environment.
@@ -96,7 +96,6 @@ because #nonzero elements in P will be enormous.
   - `-G2` Rational quadratic: `1-||ym-ym'||^2/(||ym-ym'||^2+beta^2)`
   - `-G3` Laplace: `exp(-|ym-ym'|/beta)`
   - `-G4` Neural network: see [Williams, Neural computation, 1998] for the definition of the kernel.
-  - `-G5` Your own kernel. Its definition should be inserted into `mykernel` function in `base/kernel.c`.
 - `-b [real(s)]`: The parameter(s) of a kernel function.
   - `-b [real]`: Beta. The parameter of a kernel function except the neural network kernel.
   - `-b [real,real]`: The parameters of the neural network kernel. Do not insert whitespaces before and after comma.
@@ -156,13 +155,10 @@ surfaces with moderate numbers of points, specify `-c 1e-5` or `-c 1e-6`.
 
 ### Normalization
 
-- `-u [string]`: Chooses a normalization option by specifying the argument of the option, e.g., `-uxd`.
-  - `ec`: Each of X and Y is normalized separately (default).
-  - `ed`: Each of X and Y is scaled separately but is not centerized.
-  - `xc`: X is normalized. Y is scaled based on the scale of X but Y is not centerized.
-  - `xd`: X is scaled but is not centerized. Y is scaled based on the scale of X but is not centerized.
-  - `yc`: Y is normalized. X is scaled based on the scale of Y but X is not centerized.
-  - `yd`: Y is scaled but is not centerized. X is scaled based on the scale of Y but is not centerized.
+- `-u [char]`: Chooses a normalization option by specifying the argument of the option, e.g., `-ux`.
+  - `e`: Each of X and Y is normalized separately (default).
+  - `x`: X and Y are normalized using the location and the scale of X.
+  - `y`: X and Y are normalized using the location and the scale of Y.
   - `n` : Normalization is skipped.
 
 ### File output
