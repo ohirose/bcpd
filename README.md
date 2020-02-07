@@ -1,21 +1,21 @@
 
 # Bayesian Coherent Point Drift
 
-This is an implementation of a point matching algorithm, Bayesian coherent point drift (BCPD), with
-accelerations based on the Nystrom method and the KD tree search. The BCPD is an extension of the coherent
-point drift (CPD) [Myronenko and Song, 2010], and the main difference between them lies in their
-formulations. The BCPD unifies non-rigid and similarity transformations, and thereby,
-the BCPD is often robust against the rotation of target shape. The details of the algorithm are
-available in a paper titled "A Bayesian formulation of the coherent point drift" (under review).
+This is an implementation of a non-rigid point matching algorithm, Bayesian coherent point drift (BCPD), with
+accelerations based on the Nystrom method and the KD tree search. BCPD combines non-rigid and rigid registration.
+Therefore,
+(1) BCPD solves non-rigid registration with robustness against target rotation and
+(2) BCPD solves rigid registration under an appropriate set of tuning parameters.
 Currently, we distribute the windows version only.
 
 ## Table of Contents
 
-1. [Demo](#demo)
-2. [Usage](#usage)
+1. [Paper](#paper)
+2. [Demo](#demo)
+3. [Usage](#usage)
     + [Terms and Symbols](#terms-and-symbols)
     + [Input data](#input-data)
-3. [Options](#options)
+4. [Options](#options)
     + [Tuning parameters](#tuning-parameters)
     + [Kernel functions](#kernel-functions)
     + [Acceleration](#acceleration)
@@ -24,7 +24,16 @@ Currently, we distribute the windows version only.
     + [Normalization](#normalization)
     + [File ouput](#file-output)
     + [Terminal ouput](#terminal-output)
-4. [Rigid registration](#rigid-registration)
+5. [Rigid registration](#rigid-registration)
+
+## Paper
+
+The details of the algorithm are available in the following paper:
+- O. Hirose,
+  "[A Bayesian formulation of coherent point drift](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307)",
+  IEEE TPAMI, Feb 2020.
+<!-- - Supplementary Video 1 is available [HERE] -->
+
 
 ## Demo
 
@@ -64,7 +73,7 @@ See MATLAB scripts in the `demo` folder regarding the usage of the binary file.
 
 Currently, only tab- and comma-separated files are accepted, and the extensions of input files
 MUST be `.txt`. If your file is space-delimited, convert it to tab- or comma-separated using Excel,
-MATLAB or R, for example. If the file names of target and source point sets are `X.txt` and `Y.txt`,
+MATLAB, or R, for example. If the file names of target and source point sets are `X.txt` and `Y.txt`,
 these arguments can be omitted.
 
 ## Options
@@ -79,15 +88,13 @@ will be used if they are not specified.
 - `-k [real]`: Kappa. Positive. It controls the randomness of mixing coefficients.
 - `-g [real]`: Gamma. Positive. It defines the randomness of the point matching during the early stage of the optimization.
 
-The BCPD is a unified framework of non-rigid and similarity transformations.
+BCPD is a unified framework of non-rigid registration and rigid registration.
 If point sets to be registered are smooth surfaces of 3D models, set `-w 0`.
 If your target point set is largely rotated, set gamma around
 2 to 10, which often contributes to converge a better solution.
-If lambda (-l) is set to a large value e.g. 1e8, the BCPD solves rigid registration problems.
-If you want to solve rigid registration for large point sets, accelerate the algorithm carefully;
-use the following options: `-J300 -K50 -p -d5 -e0.3 -f0.3`, for example. Otherwise, the computation
-will be unstable. Do not output P i.e., specify neither `-sP` nor `-sA` if the regstration is rigid
-because #nonzero elements in P will be enormous.
+If lambda (-l) is sufficiently large, e.g. 1e9, BCPD solves rigid registration problems.
+If you would like to solve rigid registration for large point sets, accelerate the algorithm carefully;
+see [Rigid registration](#rigid-registration).
 
 ### Kernel functions
 
@@ -104,7 +111,7 @@ Here, `ym` represents the mth point in Y. Except the neural network kernel, the 
 the kernel functions is denoted by beta, which controls the directional correlation of displacement vectors.
 If the kernel is Gaussian, the expected length of displacement vectors is controlled by lambda regardless of beta.
 Then, the expected length equals to sqrt(D/lambda). For the neural network kernel, the first and second arguments of
-the option `-b` specify the standard deviations of the intercept and linear coefficents, respectively.
+the option `-b` specify the standard deviations of the intercept and linear coefficients, respectively.
 
 ### Acceleration
 
@@ -132,7 +139,7 @@ If J, K, e, and d are not enough, the optimization will become unstable.
 ### Downsampling
 
 - `-D [char,int,real]`: Changes the number of points. E.g., `-D'B,10000,0.08'`.
-  - 1st argument: One of the symbols: [X,Y,B,x,y,b]; x: target; y: source; b: both, upper: voxel grid, lower: inverse densty.
+  - 1st argument: One of the symbols: [X,Y,B,x,y,b]; x: target; y: source; b: both, upper: voxel grid, lower: inverse density.
   - 2nd argument: The number of points to be extracted by the downsampling.
   - 3rd argument: The parameter of a downsampling technique based on the inverse point distribution.
 
@@ -180,7 +187,7 @@ surfaces with moderate numbers of points, specify `-c 1e-5` or `-c 1e-6`.
 The resulting deformed shape y will be output without `-s` option. Shape x is roughly the same
 as y if two point sets are successfully registered. If at least one of `u`,`v`, and `T` is
 specified as an argument of `-s`, normalized X and Y before optimization, which are used as
-inputs of the BCPD, will be output besides the variables. If `Y` is specified as an argument of
+inputs of BCPD, will be output besides the variables. If `Y` is specified as an argument of
 `-s`, the optimization trajectory will be saved to the binary file `.optpath.bin`.
 The trajectory can be viewed using the following MATLAB scripts, `optpath.m` for 2D data and
 `optpath3.m` for 3D data. Saving a trajectory is memory-inefficient. Disable it if both N and M
@@ -196,13 +203,13 @@ output of P might become time-consuming.
 
 ## Rigid registration
 
-The BCPD solves rigid registration problems if lambda is set to a large value, e.g. 1e9. To
-stabilize the registration performance of the rigid registration, it is important to accelerate
-the algorithm carefully. Use the following option:
+BCPD solves rigid registration problems if lambda is sufficiently large, e.g. 1e9. To stabilize
+the registration performance of the rigid registration, accelerate the algorithm carefully.
+For example, use the following option:
 
-- `-l1e9 -w0.1 -J300 -K70 -p -e0.3 -f0.3 -g3 -DB,2000,0.08 -sY`,
+- `-l1e9 -w0.1 -J300 -K70 -p -e0.3 -f0.3 -g3 -DB,2000,0.08 -sY`.
 
-for example. If two point sets are roughly registered, it is a good choice to use `-g0.1 -un`
-instead of `-g3`. Do not output P, i.e., specify neither `-sP` nor `-sA` because the number of
-nonzero elements in P will be enormous.
+Otherwise, the computation will be unstable. If two point sets are roughly registered,
+it is a good choice to use `-g0.1 -ux` instead of `-g3`. Do not output P, i.e., specify neither
+`-sP` nor `-sA` because the number of nonzero elements in P will be enormous.
 
