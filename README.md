@@ -32,7 +32,7 @@ The details of the algorithm are available in the following paper:
 - O. Hirose,
   "[A Bayesian formulation of coherent point drift](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307)",
   IEEE TPAMI, Feb 2020.
-- Supplementary Video 1 in the above paper is available [HERE](https://youtu.be/I0Hl-0-Ivyc).
+- Supplementary Video 1 in the above paper is available [HERE](https://youtu.be/cET6gKAvjw0).
 
 
 ## Demo
