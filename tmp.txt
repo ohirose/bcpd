@@ -1,3 +1,0 @@
-Supplementary Video 1 -- A Bayesian Formulation of Coherent Point Drift
-
-This is a demonstration of a point matching algorithm, Bayesian coherent point drift. The detail of the algorithm is available in the following paper: Osamu Hirose, "A Bayesian formulation of coherent point drift", IEEE TPAMI, 2020. Link: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307
