@@ -32,12 +32,11 @@ The details of the algorithm are available in the following paper:
 - O. Hirose,
   "[A Bayesian formulation of coherent point drift](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307)",
   IEEE TPAMI, Feb 2020.
-<!-- - Supplementary Video 1 is available [HERE] -->
+- Supplementary Video 1 in the above paper is available [HERE](https://youtu.be/I0Hl-0-Ivyc).
 
 
 ## Demo
 
-Demo movies are available [here](https://youtu.be/jfylrGscQeI).
 If you are a MATLAB user, demo codes can be executed in the command window of MATLAB.
 
 - Download the datasets required for demos, which are available
