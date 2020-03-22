@@ -22,8 +22,8 @@ Currently, we distribute the windows version only.
     + [Downsampling](#downsampling)
     + [Convergence](#convergence)
     + [Normalization](#normalization)
-    + [File ouput](#file-output)
-    + [Terminal ouput](#terminal-output)
+    + [File output](#file-output)
+    + [Terminal output](#terminal-output)
 5. [Rigid registration](#rigid-registration)
 
 ## Paper
@@ -33,7 +33,7 @@ The details of the algorithm are available in the following paper:
   "[A Bayesian formulation of coherent point drift](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307)",
   IEEE TPAMI, Feb 2020.
 - Supplementary Video 1 in the above paper is available [HERE](https://youtu.be/cET6gKAvjw0).
-
+  If the video file cannot be accessed, go to [online-materials](https://ieeexplore.ieee.org/document/8985307/media#media).
 
 ## Demo
 
@@ -41,6 +41,7 @@ If you are a MATLAB user, demo codes can be executed in the command window of MA
 
 - Download the datasets required for demos, which are available
   [HERE](https://www.dropbox.com/s/6kd4uiyt150uyz9/bcpd-demodata20200127.zip?dl=1).
+  If you have trouble downloading them, go to [bcpd-dataset](https://github.com/ohirose/bcpd-dataset).
 - Decompress and move the datasets into the `data` folder in this software.
 - Start MATLAB.
 - Go to the `demo` folder in the MATLAB environment.
