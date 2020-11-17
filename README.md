@@ -1,12 +1,12 @@
 
-# Bayesian Coherent Point Drift
+# Bayesian Coherent Point Drift / Bayesian Coherent Point Drift ++
 
 This is an implementation of a non-rigid point matching algorithm, Bayesian coherent point drift (BCPD), with
 accelerations based on the Nystrom method and the KD tree search. BCPD combines non-rigid and rigid registration.
 Therefore,
 (1) BCPD solves non-rigid registration with robustness against target rotation and
 (2) BCPD solves rigid registration under an appropriate set of tuning parameters.
-Currently, we distribute the windows version only.
+The algorithm can further be accelerated using downsampling and interpolation. We call the acceleration scheme BCPD++.
 
 ## Table of Contents
 
@@ -38,14 +38,13 @@ The details of the algorithm are available in the following paper:
 ## Demo
 
 If you are a MATLAB user, demo codes can be executed in the command window of MATLAB.
-
 - Download the datasets required for demos, which are available
   [HERE](https://www.dropbox.com/s/6kd4uiyt150uyz9/bcpd-demodata20200127.zip?dl=1).
   If you have trouble downloading them, go to [bcpd-dataset](https://github.com/ohirose/bcpd-dataset).
 - Decompress and move the datasets into the `data` folder in this software.
 - Start MATLAB.
 - Go to the `demo` folder in the MATLAB environment.
-- Double-click a demo script, e.g., `demoFishA.m`.
+- Double-click a demo script, e.g., `demoAsianDragon.m`.
 - Press the run button in the code editor of MATLAB.
 
 ## Usage
@@ -72,7 +71,7 @@ See MATLAB scripts in the `demo` folder regarding the usage of the binary file.
 - 2nd argument (specified by `-y`): The source shape represented as a matrix of size M x D.
 
 Currently, only tab- and comma-separated files are accepted, and the extensions of input files
-MUST be `.txt`. If your file is space-delimited, convert it to tab- or comma-separated using Excel,
+MUST be `.txt`. If your file is space-delimited, convert it to a tab- or comma-separated file using Excel,
 MATLAB, or R, for example. If the file names of target and source point sets are `X.txt` and `Y.txt`,
 these arguments can be omitted.
 
@@ -142,6 +141,7 @@ If J, K, e, and d are not enough, the optimization will become unstable.
   - 1st argument: One of the symbols: [X,Y,B,x,y,b]; x: target; y: source; b: both, upper: voxel grid, lower: inverse density.
   - 2nd argument: The number of points to be extracted by the downsampling.
   - 3rd argument: The parameter of a downsampling technique based on the inverse point distribution.
+- `-L [int]`: #Nystrom samples for accelerating interpolation (BCPD++).
 
 The algorithm can also be accelerated by downsampling techniques: i) voxel grid filter with voxel width r,
 ii) the inverse point distribution with the radius parameter r, and iii) the random sampling with equivalent
@@ -182,6 +182,7 @@ surfaces with moderate numbers of points, specify `-c 1e-5` or `-c 1e-6`.
   - `P`: Nonzero matching probabilities (=P).
   - `T`: Similarity transformation (=s,R,t).
   - `Y`: Optimization trajectory.
+  - `t`: Computing time (real/cpu) and sigma for each loop.
   - `A`: All of the above.
 
 The resulting deformed shape y will be output without `-s` option. Shape x is roughly the same
