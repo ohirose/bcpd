@@ -32,8 +32,11 @@ The details of the algorithm are available in the following paper:
 - O. Hirose,
   "[A Bayesian formulation of coherent point drift](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307)",
   IEEE TPAMI, Feb 2020.
-- Supplementary Video 1 in the above paper is available [HERE](https://youtu.be/cET6gKAvjw0).
+  - Supplementary Video 1 in the above paper is available [HERE](https://youtu.be/cET6gKAvjw0).
   If the video file cannot be accessed, go to [online-materials](https://ieeexplore.ieee.org/document/8985307/media#media).
+- O. Hirose,
+  "[Acceleration of non-rigid point set registration with downsampling and Gaussian process regression](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402)",
+  IEEE TPAMI, Dec 2020.
 
 ## Demo
 
