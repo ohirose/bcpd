@@ -7,6 +7,8 @@ Therefore,
 (1) BCPD solves non-rigid registration with robustness against target rotation and
 (2) BCPD solves rigid registration under an appropriate set of tuning parameters.
 The algorithm can further be accelerated using downsampling and interpolation. We call the acceleration scheme BCPD++.
++Algorithm details are available in [Hirose2020a](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307)
++and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402).
 
 ## Table of Contents
 
