@@ -6,9 +6,9 @@ accelerations based on the Nystrom method and the KD tree search. BCPD combines 
 Therefore,
 (1) BCPD solves non-rigid registration with robustness against target rotation and
 (2) BCPD solves rigid registration under an appropriate set of tuning parameters.
-The algorithm can further be accelerated using downsampling and interpolation. We call the acceleration scheme BCPD++.
-For more information, see [Hirose2020a](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307)
-and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402).
+The algorithm can further be accelerated using downsampling and deformation field interpolation. We call the acceleration scheme BCPD++.
+For more information, see [Hirose2020a](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307) (BCPD)
+and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) (BCPD++).
 
 ## Table of Contents
 
@@ -146,7 +146,7 @@ If J, K, e, and d are not enough, the optimization will become unstable.
   - 1st argument: One of the symbols: [X,Y,B,x,y,b]; x: target; y: source; b: both, upper: voxel grid, lower: inverse density.
   - 2nd argument: The number of points to be extracted by the downsampling.
   - 3rd argument: The parameter of a downsampling technique based on the inverse point distribution.
-- `-L [int]`: #Nystrom samples for accelerating interpolation (BCPD++).
+- `-L [int]`: #Nystrom samples for accelerating interpolation ([BCPD++](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402)).
 
 The algorithm can also be accelerated by downsampling techniques: i) voxel grid filter with voxel width r,
 ii) the inverse point distribution with the radius parameter r, and iii) the random sampling with equivalent
