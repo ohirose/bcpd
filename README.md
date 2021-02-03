@@ -1,12 +1,13 @@
 
-# Bayesian Coherent Point Drift / Bayesian Coherent Point Drift ++
+# Bayesian Coherent Point Drift (BCPD/BCPD++)
 
 This is an implementation of a non-rigid point matching algorithm, Bayesian coherent point drift (BCPD), with
 accelerations based on the Nystrom method and the KD tree search. BCPD combines non-rigid and rigid registration.
 Therefore,
 (1) BCPD solves non-rigid registration with robustness against target rotation and
 (2) BCPD solves rigid registration under an appropriate set of tuning parameters.
-The algorithm can further be accelerated using downsampling and deformation field interpolation. We call the acceleration scheme BCPD++.
+The algorithm can further be accelerated using downsampling and deformation vector interpolation.
+We call the acceleration scheme BCPD++.
 For more information, see [Hirose2020a](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307) (BCPD)
 and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) (BCPD++).
 
@@ -14,19 +15,23 @@ and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=92904
 
 1. [Papers](#papers)
 2. [Demo](#demo)
-3. [Usage](#usage)
+3. [Compilation](#compilation)
+    + [Windows](#windows)
+    + [MacOS and Linux](#macos-and-linux)
+4. [Usage](#usage)
     + [Terms and Symbols](#terms-and-symbols)
     + [Input data](#input-data)
-4. [Options](#options)
+5. [Options](#options)
     + [Tuning parameters](#tuning-parameters)
     + [Kernel functions](#kernel-functions)
     + [Acceleration](#acceleration)
     + [Downsampling](#downsampling)
+    + [Interpolation](#interpolation)
     + [Convergence](#convergence)
     + [Normalization](#normalization)
     + [File output](#file-output)
     + [Terminal output](#terminal-output)
-5. [Rigid registration](#rigid-registration)
+6. [Rigid registration](#rigid-registration)
 
 ## Papers
 
@@ -42,19 +47,41 @@ The details of the algorithms are available in the following papers:
 
 ## Demo
 
-If you are a MATLAB user, demo codes can be executed in the command window of MATLAB.
+If you are a MATLAB user, demo codes can be executed in the MATLAB command window.
+
 - Download the datasets required for demos, which are available
   [HERE](https://www.dropbox.com/s/6kd4uiyt150uyz9/bcpd-demodata20200127.zip?dl=1).
   If you have trouble downloading them, go to [bcpd-dataset](https://github.com/ohirose/bcpd-dataset).
 - Decompress and move the datasets into the `data` folder in this software.
 - Start MATLAB.
 - Go to the `demo` folder in the MATLAB environment.
-- Double-click a demo script, e.g., `demoAsianDragon.m`.
+- Double-click a demo script, e.g., `demoFishA.m`.
 - Press the run button in the code editor of MATLAB.
+
+## Compilation
+
+### Windows
+
+The compilation is not required. Use the binary file `bcpd.exe` in the `win` directory.
+The binary file was compiled by GCC included in the 32-bit version of the MinGW system,
+Therefore, it might be quite slower than the one compiled in a Mac/Linux system.
+
+### MacOS and Linux
+
+1. Install the LAPACK library if not installed. If your machine is a Mac, install Xcode, Xcode command-line tools,
+   and MacPorts (or Homebrew).
+2. Download and uncompress the zip file that includes source codes.
+3. Move into the top directory of the uncompressed folder using the terminal window.
+4. Type `make OPT=-DUSE_OPENMP ENV=<your-environment>`; replace `<your-environment>` with one of `LINUX`,
+   `HOMEBREW`, and `MACPORTS`. To disable OpenMP, type `make OPT=-DNUSE_OPENMP`.
 
 ## Usage
 
-Type the following command in the DOS prompt:
+Type the following command in the terminal window for Mac/Linux:
+
+` ./bcpd -x <target: X> -y <source: Y> (+options) `
+
+For Windows, type the following command in the DOS prompt:
 
 ` bcpd -x <target: X> -y <source: Y> (+options) `
 
@@ -107,6 +134,7 @@ see [Rigid registration](#rigid-registration).
   - `-G2` Rational quadratic: `1-||ym-ym'||^2/(||ym-ym'||^2+beta^2)`
   - `-G3` Laplace: `exp(-|ym-ym'|/beta)`
   - `-G4` Neural network: see [Williams, Neural computation, 1998] for the definition of the kernel.
+  - `-G5` Your own kernel. Its definition should be inserted into `mykernel` function in `base/kernel.c`.
 - `-b [real(s)]`: The parameter(s) of a kernel function.
   - `-b [real]`: Beta. The parameter of a kernel function except the neural network kernel.
   - `-b [real,real]`: The parameters of the neural network kernel. Do not insert whitespaces before and after comma.
@@ -122,7 +150,7 @@ the option `-b` specify the standard deviations of the intercept and linear coef
 - `-A`: Acceleration with default acceleration parameters, i.e., `-K70 -J300 -p -d7 -e0.15 -f0.2`.
 - `-K [int]`: #Nystrom samples for computing G.
 - `-J [int]`: #Nystrom samples for computing P.
-  - `-r [int]`: Random number seed for the Nystrom method. Reproducibility is guaranteed if the same number is specified.
+- `-r [int]`: Random number seed for the Nystrom method. Reproducibility is guaranteed if the same number is specified.
 - `-p`: KD-tree search is turned on if specified. The following options fine-tune the KD tree search.
   - `-d [real]`: Scale factor of sigma that defines areas to search for neighbors.
   - `-e [real]`: Maximum radius to search for neighbors.
@@ -135,26 +163,35 @@ If N and M are larger than several thousand, specify `-J 300 -K 80 -p`, for exam
 Then, the computation will be faster without sacrificing the registration accuracy.
 Also, we note that N and M are more than several hundreds of thousands, the optimization might
 get slow especially near convergence even if the options `-J`, `K`, and `-p` are activated.
-The default settings of the scale factor and the maximum radius regarding the KD tree search
-are `-d 7`, `-e 0.15` and `-f 0.2`. The computational load will, therefore, be relaxed by specifying
-`-d 4` or `-e 0.1`, for example, although the accuracy of the computation decreases.
-If J, K, e, and d are not enough, the optimization will become unstable.
+If so, use [BCPD++](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402),
+an additional acceleration scheme using [downsampling](#downsampling) and [interpolation](#interpolation).
 
 ### Downsampling
 
 - `-D [char,int,real]`: Changes the number of points. E.g., `-D'B,10000,0.08'`.
-  - 1st argument: One of the symbols: [X,Y,B,x,y,b]; x: target; y: source; b: both, upper: voxel grid, lower: inverse density.
+  - 1st argument: One of the symbols: [X,Y,B,x,y,b]; x: target; y: source; b: both, upper: voxel, lower: ball.
   - 2nd argument: The number of points to be extracted by the downsampling.
-  - 3rd argument: The parameter of a downsampling technique based on the inverse point distribution.
-- `-L [int]`: #Nystrom samples for accelerating interpolation ([BCPD++](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402)).
+  - 3rd argument: The voxel size or ball radius required for downsampling.
 
-The algorithm can also be accelerated by downsampling techniques: i) voxel grid filter with voxel width r,
-ii) the inverse point distribution with the radius parameter r, and iii) the random sampling with equivalent
-sampling probabilities. The parameter r can be specified as the 3rd argument of `-D`. If r is specified as 0,
-sampling scheme iii) is selected. Sampling scheme ii) is slightly accurate but much slower than sampling scheme i).
-The algorithmic accelerations and a downsampling technique can be combined. The resulting registered shape with
-interpolation is output to the file with suffix `y.interpolated.txt`. The numbers of points to be downsampled for
-target and source point sets can be different; specify the `-D` option twice, e.g., `-D'X,6000,0.08' -D'Y,5000,0.05'`.
+Input point sets can be downsampled by i) voxel-grid resampling with voxel width r,
+ii) ball resampling with the radius r, and iii) random resampling with equivalent sampling probabilities.
+The parameter r can be specified as the 3rd argument of `-D`. If r is specified as 0,
+sampling scheme iii) is selected. The numbers of points to be downsampled for target and source point
+sets can be different; specify the `-D` option twice, e.g., `-D'X,6000,0.08' -D'Y,5000,0.05'`.
+For more information, see [paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) and
+[appendix](https://ieeexplore.ieee.org/ielx7/34/4359286/9290402/supp1-3043769.pdf?tp=&arnumber=9290402).
+
+### Interpolation
+
+- `-L [int]`: #Nystrom samples for accelerating interpolation.
+
+[BCPD++](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402),
+an acceleration scheme based on downsampling and deformation vector interpolation,
+further accelerates non-rigid point set registration besides the [acceleration](#acceleration) inside BCPD,
+Specify `-L100`, for example, if you would like to accelerate non-rigid registration with downsampling.
+The resulting registered shape with interpolation is output to the file with the suffix `y.interpolated.txt`.
+If the `-L` option is unspecified and the lambda is relatively small, the method executes
+deformation vector interpolation without low-rank approximations, which will be quite slow or might fail.
 
 ### Convergence
 
@@ -206,6 +243,7 @@ output of P might become time-consuming.
 - `-q`: Quiet mode. Print nothing.
 - `-h`: History mode. Status information for each loop will not be cleared if specified.
 - `-v`: Print the version and the simple instruction of this software.
+- `-W`: Disable warnings.
 
 ## Rigid registration
 
