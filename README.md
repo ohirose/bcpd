@@ -63,7 +63,7 @@ If you are a MATLAB user, demo codes can be executed in the MATLAB command windo
 ### Windows
 
 The compilation is not required. Use the binary file `bcpd.exe` in the `win` directory.
-The binary file was compiled by GCC included in the 32-bit version of the MinGW system,
+The binary file was compiled by GCC included in the 32-bit version of the MinGW system.
 Therefore, it might be quite slower than the one compiled in a Mac/Linux system.
 
 ### MacOS and Linux
@@ -187,7 +187,7 @@ For more information, see [paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp
 
 [BCPD++](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402),
 an acceleration scheme based on downsampling and deformation vector interpolation,
-further accelerates non-rigid point set registration besides the [acceleration](#acceleration) inside BCPD,
+further accelerates non-rigid point set registration besides the [acceleration](#acceleration) inside BCPD.
 Specify `-L100`, for example, if you would like to accelerate non-rigid registration with downsampling.
 The resulting registered shape with interpolation is output to the file with the suffix `y.interpolated.txt`.
 If the `-L` option is unspecified and the lambda is relatively small, the method executes

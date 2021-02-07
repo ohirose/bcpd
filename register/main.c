@@ -361,7 +361,7 @@ int main(int argc, char **argv){
   gettimeofday(tv+3,NULL); tt[3]=clock();
   if(ny){
     if(!(pm.opt&PW_OPT_QUIET)) fprintf(stderr,"%s  Interpolating ... ",(pm.opt&PW_OPT_HISTO)?"\n":"");
-    T=calloc(D*M0,sd); //interpolate(T,Y0,M0,x,Y,w,&s,R,t,&r,sz,pm);
+    T=calloc(D*M0,sd);
     if(pm.opt&PW_OPT_1NN) interpolate_1nn(T,Y0,M0,v,Y,  &s,R,t,   sz,pm);
     else                  interpolate    (T,Y0,M0,x,Y,w,&s,R,t,&r,sz,pm);
     switch(pm.nrm){

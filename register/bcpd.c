@@ -66,7 +66,7 @@ int bcpd(
   double        *   y,    /*  O  | DM x 1 (+nlp) | deformed source shape    */
   double        *   u,    /*  O  | DM x 1        | normalized def. shape    */
   double        *   v,    /*  O  | DM x 1        | displacement vectors     */
-  double        *   w,    /*  O  |  M x 1        | non-outlier probability  */
+  double        *   w,    /*  O  |  M x 1        | #matches for each m      */
   double        *   a,    /*  O  |  M x 1        | mixing coefficients      */
   double        *   sgm,  /*  O  |  M x 1        | posterior covariance     */
   double        *   s,    /*  O  |    1          | scale factor             */
