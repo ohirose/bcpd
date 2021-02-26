@@ -2,24 +2,24 @@ close all; clear;
 %% set 'win=1' if windows
 win=1;
 %% input files
-x   =sprintf('%s/../data/dragon-x.txt',pwd);
-y   =sprintf('%s/../data/dragon-y.txt',pwd);
+x   =sprintf('%s/../data/armadillo-x.txt',pwd);
+y   =sprintf('%s/../data/armadillo-y.txt',pwd);
 fnm =sprintf('%s/../bcpd',                pwd);
 fnw =sprintf('%s/../win/bcpd.exe',        pwd);
 if(win==1) bcpd=fnw; else bcpd=fnm; end;
 %% parameters
 omg ='0.0';
-bet ='1.2';
-lmd ='200';
+bet ='2.0';
+lmd ='50';
 gma ='10';
-K   ='100';
+K   ='70';
 J   ='300';
 f   ='0.3';
 c   ='1e-6';
 n   ='500';
-L   ='400';
+L   ='100';
 nrm ='e';
-dwn ='b,10000,0.02';
+dwn ='B,5000,0.02';
 %% execution
 prm1=sprintf('-w%s -b%s -l%s -g%s',omg,bet,lmd,gma);
 prm2=sprintf('-J%s -K%s -p -L%s -f%s -u%s -D%s',J,K,L,f,nrm,dwn);
