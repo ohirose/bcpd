@@ -10,6 +10,7 @@ The algorithm can further be accelerated using downsampling and deformation vect
 We call the acceleration scheme BCPD++. It registers point sets more than 10 million points.
 For more information, see [Hirose2020a](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307) (BCPD)
 and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) (BCPD++).
+![alt text](https://github.com/ohirose/bcpd/blob/master/img/transfer.jpg?raw=true)
 
 ## Table of Contents
 
@@ -47,12 +48,13 @@ The details of the algorithms are available in the following papers:
 
 ## Demo
 
+### Point Set Registration
 If you are a MATLAB user, demo codes can be executed in the MATLAB command window.
 
 - Download the datasets required for demos:
   [BCPD](https://www.dropbox.com/s/6kd4uiyt150uyz9/bcpd-demodata20200127.zip?dl=1) and
   [BCPD++](https://www.dropbox.com/s/um46xujczko39jk/bcpd-pp-demodata20210226.zip?dl=1).
-  If you have trouble downloading them, go to [bcpd-dataset](https://github.com/ohirose/bcpd-dataset).
+  - If you have trouble downloading them, go to [bcpd-dataset](https://github.com/ohirose/bcpd-dataset).
 - Decompress and move the datasets into the `data` folder in this software.
 - Start MATLAB.
 - Go to the `demo` folder in the MATLAB environment.
@@ -60,6 +62,12 @@ If you are a MATLAB user, demo codes can be executed in the MATLAB command windo
 - If your environment is Mac or Linux, replace `win=1` by `win=0` in the demo script.
   - The script named `demoPrepare.sh` automates this procedure.
 - Press the run button in the code editor of MATLAB.
+
+### Shape Transfer
+
+- Go to the `demo/shapeTransfer` folder using your terminal window.
+- Run a demo script, e.g., type `./shapeTransferA` in the terminal.
+- Check output files named `transferV*_y.interpolated.obj`.
 
 ## Compilation
 

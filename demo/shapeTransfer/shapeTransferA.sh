@@ -1,5 +1,5 @@
 ## set 'win=1' if windows
-win=1;
+win=0;
 if [[ $win -eq 1 ]]
 then
   EXE=../../win/bcpd.exe;
@@ -9,8 +9,8 @@ fi;
 
 Y=42;
 X=01;
-pfx1='transferA'
-pfx2='transferB'
+pfx1='transferV1'
+pfx2='transferV2'
 fn1=${pfx1}_y.interpolated;
 fn2=${pfx2}_y.interpolated;
 
@@ -25,5 +25,5 @@ for PSET in ${fn1} ${fn2}; do
   paste v.txt $PSET.txt |tr '\t' ' ' > tmp.txt;
   cat tmp.txt faces${Y}.txt > $PSET.obj
 done;
-rm tmp.txt shape??.txt v.txt faces??.txt
+rm tmp.txt shape??.txt v.txt faces??.txt transfer*.txt
 
