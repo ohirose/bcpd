@@ -7,7 +7,7 @@ Therefore,
 (1) BCPD solves non-rigid registration with robustness against target rotation and
 (2) BCPD solves rigid registration under an appropriate set of tuning parameters.
 The algorithm can further be accelerated using downsampling and deformation vector interpolation.
-We call the acceleration scheme BCPD++. It registers point sets more than 10 million points.
+We call the acceleration scheme BCPD++. It registers point sets containing over 10 million points.
 For more information, see [Hirose2020a](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307) (BCPD)
 and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) (BCPD++).
 ![alt text](https://github.com/ohirose/bcpd/blob/master/img/transfer.jpg?raw=true)
@@ -15,12 +15,16 @@ and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=92904
 ## Table of Contents
 
 1. [Papers](#papers)
+    + [BCPD++](#bcpd++)
+    + [BCPD](#bcpd)
 2. [Demo](#demo)
+    + [Point set registration](#point-set-registration)
+    + [Shape transfer](#shape-transfer)
 3. [Compilation](#compilation)
     + [Windows](#windows)
     + [MacOS and Linux](#macos-and-linux)
 4. [Usage](#usage)
-    + [Terms and Symbols](#terms-and-symbols)
+    + [Terms and symbols](#terms-and-symbols)
     + [Input data](#input-data)
 5. [Options](#options)
     + [Tuning parameters](#tuning-parameters)
@@ -36,37 +40,38 @@ and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=92904
 
 ## Papers
 
-The details of the algorithms are available in the following papers:
-- [BCPD++] O. Hirose,
+### BCPD++
+  O. Hirose,
   "[Acceleration of non-rigid point set registration with downsampling and Gaussian process regression](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402)",
   IEEE TPAMI, Dec 2020.
-- [BCPD] O. Hirose,
-  "[A Bayesian formulation of coherent point drift](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307)",
+
+### BCPD
+  O. Hirose, "[A Bayesian formulation of coherent point drift](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307)",
   IEEE TPAMI, Feb 2020.
   - Supplementary Video 1 in the above paper is available [HERE](https://youtu.be/cET6gKAvjw0).
   If the video file cannot be accessed, go to [online-materials](https://ieeexplore.ieee.org/document/8985307/media#media).
 
 ## Demo
 
-### Point Set Registration
+### Point set registration
 If you are a MATLAB user, demo codes can be executed in the MATLAB command window.
 
 - Download the datasets required for demos:
-  [BCPD](https://www.dropbox.com/s/6kd4uiyt150uyz9/bcpd-demodata20200127.zip?dl=1) and
-  [BCPD++](https://www.dropbox.com/s/um46xujczko39jk/bcpd-pp-demodata20210226.zip?dl=1).
+  [BCPD data](https://www.dropbox.com/s/6kd4uiyt150uyz9/bcpd-demodata20200127.zip?dl=1) and
+  [BCPD++ data](https://www.dropbox.com/s/um46xujczko39jk/bcpd-pp-demodata20210226.zip?dl=1).
   - If you have trouble downloading them, go to [bcpd-dataset](https://github.com/ohirose/bcpd-dataset).
 - Decompress and move the datasets into the `data` folder in this software.
 - Start MATLAB.
-- Go to the `demo` folder in the MATLAB environment.
+- Go to any one of `demo/bcpd-[nonrigid/rigid/plusplus]` folder in the MATLAB environment.
 - Double-click a demo script, e.g., `demoFishA.m`.
 - If your environment is Mac or Linux, replace `win=1` by `win=0` in the demo script.
   - The script named `demoPrepare.sh` automates this procedure.
 - Press the run button in the code editor of MATLAB.
 
-### Shape Transfer
+### Shape transfer
 
 - Go to the `demo/shapeTransfer` folder using your terminal window.
-- Run a demo script, e.g., type `./shapeTransferA` in the terminal.
+- Run a demo script, e.g., type `./shapeTransferA.sh` in the terminal.
 - Check output files named `transferV*_y.interpolated.obj`.
 
 ## Compilation
