@@ -1,13 +1,11 @@
 close all; clear;
 addpath('..');
-%% set 'win=1' if windows
-win=1;
 %% input files
-x   =sprintf('%s/../../data/%s',pwd,'parasaurolophus_view005.t..');;
-y   =sprintf('%s/../../data/%s',pwd,'parasaurolophus_view006.t..');;
+x   =sprintf('%s/../../data/%s',pwd,'parasaurolophus_view005.txt');
+y   =sprintf('%s/../../data/%s',pwd,'parasaurolophus_view006.txt');
 fnm =sprintf('%s/../../bcpd',                pwd);
 fnw =sprintf('%s/../../win/bcpd.exe',        pwd);
-if(win==1) bcpd=fnw; else bcpd=fnm; end;
+if(ispc) bcpd=fnw; else bcpd=fnm; end;
 %% parameters
 omg ='0.1';
 bet ='2.0';

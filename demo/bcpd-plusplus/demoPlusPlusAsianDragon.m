@@ -1,13 +1,11 @@
 close all; clear;
 addpath('..');
-%% set 'win=1' if windows
-win=1;
 %% input files
 x   =sprintf('%s/../../data/asiandragon-x.txt',pwd);
 y   =sprintf('%s/../../data/asiandragon-y.txt',pwd);
 fnm =sprintf('%s/../../bcpd',             pwd);
 fnw =sprintf('%s/../../win/bcpd.exe',     pwd);
-if(win==1) bcpd=fnw; else bcpd=fnm; end;
+if(ispc) bcpd=fnw; else bcpd=fnm; end;
 %% parameters
 omg ='0.0';
 bet ='2.0';

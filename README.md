@@ -4,7 +4,7 @@
 This is an implementation of a non-rigid point matching algorithm, Bayesian coherent point drift (BCPD), with
 accelerations based on the Nystrom method and the KD tree search. BCPD combines non-rigid and rigid registration.
 Therefore,
-(1) BCPD solves non-rigid registration with robustness against target rotation and
+(1) BCPD solves non-rigid registration with robustness against target rotation, and
 (2) BCPD solves rigid registration under an appropriate set of tuning parameters.
 The algorithm can further be accelerated using downsampling and deformation vector interpolation.
 We call the acceleration scheme BCPD++. It registers point sets containing over 10 million points.
@@ -40,10 +40,10 @@ and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=92904
 
 The details of the algorithms are available in the following papers:
 - [BCPD++] O. Hirose,
-  "[Acceleration of non-rigid point set registration with downsampling and Gaussian process regression](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402)",
+  "[Acceleration of non-rigid point set registration with downsampling and Gaussian process regression](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402),"
   IEEE TPAMI, Dec 2020.
 - [BCPD] O. Hirose,
-  "[A Bayesian formulation of coherent point drift](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307)",
+  "[A Bayesian formulation of coherent point drift](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307),"
   IEEE TPAMI, Feb 2020.
   - Supplementary Video 1 in the above paper is available [HERE](https://youtu.be/cET6gKAvjw0).
   If the video file cannot be accessed, go to [online-materials](https://ieeexplore.ieee.org/document/8985307/media#media).
@@ -61,7 +61,6 @@ If you are a MATLAB user, demo codes can be executed in the MATLAB command windo
 - Start MATLAB.
 - Go to any one of `demo/bcpd-[nonrigid/rigid/plusplus]` folder in the MATLAB environment.
 - Double-click a demo script, e.g., `demoFishA.m`.
-- If your environment is Mac or Linux, replace `win=1` by `win=0` in the demo script.
   - The script named `demoPrepare.sh` automates this procedure.
 - Press the run button in the code editor of MATLAB.
 
@@ -69,7 +68,7 @@ If you are a MATLAB user, demo codes can be executed in the MATLAB command windo
 
 - Go to the `demo/shapeTransfer` folder using your terminal window.
 - Run a demo script, e.g., type `./shapeTransferA.sh` in the terminal.
-- Check output files named `transferV*_y.interpolated.obj`.
+- Check output files named `transferV[1/2]_y.interpolated.obj`.
 
 ## Compilation
 
@@ -99,7 +98,7 @@ For Windows, type the following command in the DOS prompt:
 ` bcpd -x <target: X> -y <source: Y> (+options) `
 
 Brief instructions are printed by typing `./bcpd -v` (or `bcpd -v` for windows) in the terminal window.
-The binary file can also be executed using `system` function in MATLAB.
+The binary file can also be executed using the `system` function in MATLAB.
 See MATLAB scripts in the `demo` folder regarding the usage of the binary file.
 
 ### Terms and symbols
@@ -134,8 +133,7 @@ will be used if they are not specified.
 
 BCPD is a unified framework of non-rigid registration and rigid registration.
 If point sets to be registered are smooth surfaces of 3D models, set `-w 0`.
-If your target point set is largely rotated, set gamma around
-2 to 10, which often contributes to converge a better solution.
+Set gamma around 2 to 10 if your target point set is largely rotated. Then, the algorithm often converges a better solution.
 If lambda (-l) is sufficiently large, e.g. 1e9, BCPD solves rigid registration problems.
 If you would like to solve rigid registration for large point sets, accelerate the algorithm carefully;
 see [Rigid registration](#rigid-registration).
@@ -174,8 +172,8 @@ It usually runs faster than the direct computation does if M and N are moderatel
 and the number of points to be sampled is set to much smaller than both N and M.
 If N and M are larger than several thousand, specify `-J 300 -K 80 -p`, for example.
 Then, the computation will be faster without sacrificing the registration accuracy.
-Also, we note that N and M are more than several hundreds of thousands, the optimization might
-get slow especially near convergence even if the options `-J`, `K`, and `-p` are activated.
+We note that, for N and M are more than several hundreds of thousands,
+the optimization might get slow even if the options `-J`, `K`, and `-p` are activated.
 If so, use [BCPD++](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402),
 an additional acceleration scheme using [downsampling](#downsampling) and [interpolation](#interpolation).
 
@@ -245,11 +243,11 @@ as y if two point sets are successfully registered. If at least one of `u`,`v`, 
 specified as an argument of `-s`, normalized X and Y before optimization, which are used as
 inputs of BCPD, will be output besides the variables. If `Y` is specified as an argument of
 `-s`, the optimization trajectory will be saved to the binary file `.optpath.bin`.
-The trajectory can be viewed using the following MATLAB scripts, `optpath.m` for 2D data and
+The trajectory can be viewed using scripts: `optpath.m` for 2D data and
 `optpath3.m` for 3D data. Saving a trajectory is memory-inefficient. Disable it if both N and M
 are more than several hundreds of thousands. If `P` is specified as an argument of `-s`,
 nonzero elements of matching probability P will be output. If the optimization is not converged,
-output of P might become time-consuming.
+the output of P might become time-consuming.
 
 ### Terminal output
 
