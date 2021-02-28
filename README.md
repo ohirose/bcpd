@@ -61,7 +61,6 @@ If you are a MATLAB user, demo codes can be executed in the MATLAB command windo
 - Start MATLAB.
 - Go to any one of `demo/bcpd-[nonrigid/rigid/plusplus]` folder in the MATLAB environment.
 - Double-click a demo script, e.g., `demoFishA.m`.
-  - The script named `demoPrepare.sh` automates this procedure.
 - Press the run button in the code editor of MATLAB.
 
 ### Shape transfer
