@@ -51,7 +51,7 @@ The details of the algorithms are available in the following papers:
 ## Demo
 
 ### Point set registration
-If you are a MATLAB user, demo codes can be executed in the MATLAB command window.
+MATLAB scripts under the `demo` folder will demonstrate various examples.
 
 - Download the datasets required for demos:
   [BCPD data](https://www.dropbox.com/s/6kd4uiyt150uyz9/bcpd-demodata20200127.zip?dl=1) and
@@ -59,11 +59,12 @@ If you are a MATLAB user, demo codes can be executed in the MATLAB command windo
   - If you have trouble downloading them, go to [bcpd-dataset](https://github.com/ohirose/bcpd-dataset).
 - Decompress and move the datasets into the `data` folder in this software.
 - Start MATLAB.
-- Go to any one of `demo/bcpd-[nonrigid/rigid/plusplus]` folder in the MATLAB environment.
+- Go to one of `demo/bcpd-[nonrigid/rigid/plusplus]` folders in the MATLAB environment.
 - Double-click a demo script, e.g., `demoFishA.m`.
 - Press the run button in the code editor of MATLAB.
 
 ### Shape transfer
+Bash scripts under the `demo` folder will demonstrate Shape transfer/BCPD++ examples without MATLAB.
 
 - Go to the `demo/shapeTransfer` folder using your terminal window.
 - Run a demo script, e.g., type `./shapeTransferA.sh` in the terminal.
