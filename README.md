@@ -134,6 +134,9 @@ will be used if they are not specified.
 BCPD is a unified framework of non-rigid registration and rigid registration.
 If point sets to be registered are smooth surfaces of 3D models, set `-w 0`.
 Set gamma around 2 to 10 if your target point set is largely rotated. Then, the algorithm often converges a better solution.
+The default kappa is infinity, which means that all mixing coefficients are equivalent.
+Do not specify `-k infinity` or extremely large kappa to impose the equivalence of mixing coefficients,
+which sometimes causes an error.
 If lambda (-l) is sufficiently large, e.g. 1e9, BCPD solves rigid registration problems.
 If you would like to solve rigid registration for large point sets, accelerate the algorithm carefully;
 see [Rigid registration](#rigid-registration).
@@ -210,6 +213,9 @@ deformation vector interpolation without low-rank approximations, which will be 
 - `-n [int ]`: The maximum number of VB loops.
 - `-N [int ]`: The minimum number of VB loops.
 
+The default minimum VB iteration is `30`, which sometimes causes an error for small data.
+If the bcpd execution stopped within 30 loops with an error notice, execute it again after
+setting `-N1`, which removes the constraint on the minimum VB iteration.
 The default value of the convergence tolerance is `1e-4`. If your point sets are smooth
 surfaces with moderate numbers of points, specify `-c 1e-5` or `-c 1e-6`.
 
