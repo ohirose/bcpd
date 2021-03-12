@@ -56,11 +56,11 @@ The details of the algorithms are available in the following papers:
 ### BCPD vs CPD
 BCPD is faster than CPD and is often more accurate. The following figure shows a comparison
 using Armadillo data included in demo data:
-![alt text](https://github.com/ohirose/bcpd/blob/master/img/vs-cpd.png?raw=true)
+<img src="https://github.com/ohirose/bcpd/blob/master/img/vs-cpd.png" alt="vs-cpd" width="200"/>
 
 ### BCPD vs BCPD++
 BCPD++ is much faster than BCPD but is slightly less accurate.
-![alt text](https://github.com/ohirose/bcpd/blob/master/img/vs-plusplus.png?raw=true)
+<img src="https://github.com/ohirose/bcpd/blob/master/img/vs-plusplus.png" alt="vs-plusplus" width="200"/>
 
 ## Demo
 
