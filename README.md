@@ -15,16 +15,19 @@ and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=92904
 ## Table of Contents
 
 1. [Papers](#papers)
-2. [Demo](#demo)
+2. [Peformance](#performance)
+    + [BCPD vs CPD](#bcpd-vs-cpd)
+    + [BCPD vs BCPD++](#bcpd-vs-bcpd)
+3. [Demo](#demo)
     + [Point set registration](#point-set-registration)
     + [Shape transfer](#shape-transfer)
-3. [Compilation](#compilation)
+4. [Compilation](#compilation)
     + [Windows](#windows)
     + [MacOS and Linux](#macos-and-linux)
-4. [Usage](#usage)
+5. [Usage](#usage)
     + [Terms and symbols](#terms-and-symbols)
     + [Input data](#input-data)
-5. [Options](#options)
+6. [Options](#options)
     + [Tuning parameters](#tuning-parameters)
     + [Kernel functions](#kernel-functions)
     + [Acceleration](#acceleration)
@@ -34,7 +37,7 @@ and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=92904
     + [Normalization](#normalization)
     + [File output](#file-output)
     + [Terminal output](#terminal-output)
-6. [Rigid registration](#rigid-registration)
+7. [Rigid registration](#rigid-registration)
 
 ## Papers
 
@@ -47,6 +50,17 @@ The details of the algorithms are available in the following papers:
   IEEE TPAMI, Feb 2020.
   - Supplementary Video 1 in the above paper is available [HERE](https://youtu.be/cET6gKAvjw0).
   If the video file cannot be accessed, go to [online-materials](https://ieeexplore.ieee.org/document/8985307/media#media).
+
+## Performance
+
+### BCPD vs CPD
+BCPD is faster than CPD and is often more accurate. The following figure shows a comparison
+using Armadillo data included in demo data:
+![alt text](https://github.com/ohirose/bcpd/blob/master/img/vs-cpd.png?raw=true)
+
+### BCPD vs BCPD++
+BCPD++ is much faster than BCPD but is slightly less accurate.
+![alt text](https://github.com/ohirose/bcpd/blob/master/img/vs-plusplus.png?raw=true)
 
 ## Demo
 
@@ -65,6 +79,7 @@ MATLAB scripts under the `demo` folder will demonstrate various examples.
 
 ### Shape transfer
 Bash scripts under the `demo` folder will demonstrate Shape transfer/BCPD++ examples without MATLAB.
+Several examples can be watched [HERE](https://youtu.be/pbLVMDj1Zro).
 
 - Go to the `demo/shapeTransfer` folder using your terminal window.
 - Run a demo script, e.g., type `./shapeTransferA.sh` in the terminal.
@@ -263,6 +278,7 @@ the output of P might become time-consuming.
 - `-W`: Disable warnings.
 
 ## Rigid registration
+![alt text](https://github.com/ohirose/bcpd/blob/master/img/rigid.png?raw=true)
 
 BCPD solves rigid registration problems if lambda is sufficiently large, e.g. 1e9. To stabilize
 the registration performance of the rigid registration, accelerate the algorithm carefully.
@@ -273,4 +289,4 @@ For example, use the following option:
 Otherwise, the computation will be unstable. If two point sets are roughly registered,
 it is a good choice to use `-g0.1 -ux` instead of `-g3`. Do not output P, i.e., specify neither
 `-sP` nor `-sA` because the number of nonzero elements in P will be enormous.
-
+Several examples can be watched [HERE](https://youtu.be/SoUTbH2tJj8).
