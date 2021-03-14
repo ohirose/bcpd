@@ -1,13 +1,15 @@
 
 # Bayesian Coherent Point Drift (BCPD/BCPD++)
 
-This is an implementation of a non-rigid point matching algorithm, Bayesian coherent point drift (BCPD), with
-accelerations based on the Nystrom method and the KD tree search. BCPD combines non-rigid and rigid registration.
-Therefore,
-(1) BCPD solves non-rigid registration with robustness against target rotation, and
-(2) BCPD solves rigid registration under an appropriate set of tuning parameters.
-The algorithm can further be accelerated using downsampling and deformation vector interpolation.
-We call the acceleration scheme BCPD++. It registers point sets containing over 10 million points.
+This software implements Bayesian coherent point drift (BCPD), a non-rigid point matching algorithm
+based on variational Bayesian inference. The algorithm combines rigid CPD and non-rigid CPD
+as a single algorithm. The acceleration method called BCPD++ efficiently reduces computing time.
+The software has the following characteristics:
+
+- It performs non-rigid registration with robustness against target rotation.
+- It performs rigid registration and finds the overlap between partial 3D scans under appropriate parameters.
+- It registers point sets containing over 10 million points.
+
 For more information, see [Hirose2020a](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307) (BCPD)
 and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) (BCPD++).
 ![alt text](https://github.com/ohirose/bcpd/blob/master/img/transfer.jpg?raw=true)
@@ -27,12 +29,14 @@ and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=92904
 5. [Usage](#usage)
     + [Terms and symbols](#terms-and-symbols)
     + [Input data](#input-data)
-6. [Options](#options)
     + [Tuning parameters](#tuning-parameters)
     + [Kernel functions](#kernel-functions)
-    + [Acceleration](#acceleration)
+6. [Acceleration](#acceleration)
+    + [Nystrom method](#nystrom-method)
+    + [KD tree search](#kd-tree-search)
     + [Downsampling](#downsampling)
     + [Interpolation](#interpolation)
+6. [Options](#options)
     + [Convergence](#convergence)
     + [Normalization](#normalization)
     + [File output](#file-output)
@@ -54,13 +58,13 @@ The details of the algorithms are available in the following papers:
 ## Performance
 
 ### BCPD vs CPD
-BCPD is faster than CPD and is often more accurate. The following figure shows a comparison
-using Armadillo data included in demo data:
+BCPD is faster than coherent point drift (CPD) and is often more accurate. The following figure shows a comparison
+using Armadillo data included in demo data (vs Dr. Myronenko's implementation on Macbook Pro Early 2013):
 
 <img src="https://github.com/ohirose/bcpd/blob/master/img/vs-cpd.png" alt="vs-cpd" width="400"/>
 
 ### BCPD vs BCPD++
-BCPD++ is much faster than BCPD but is slightly less accurate.
+BCPD++ is much faster than BCPD but is slightly less accurate (Mac Mini 2018).
 
 <img src="https://github.com/ohirose/bcpd/blob/master/img/vs-plusplus.png" alt="vs-plusplus" width="400"/>
 
@@ -92,7 +96,7 @@ Several examples can be watched [HERE](https://youtu.be/pbLVMDj1Zro).
 ### Windows
 
 The compilation is not required. Use the binary file `bcpd.exe` in the `win` directory.
-The binary file was compiled by GCC included in the 32-bit version of the MinGW system.
+The binary file was created by GCC included in the 32-bit version of the MinGW system.
 Therefore, it might be quite slower than the one compiled in a Mac/Linux system.
 
 ### MacOS and Linux
@@ -102,7 +106,7 @@ Therefore, it might be quite slower than the one compiled in a Mac/Linux system.
 2. Download and uncompress the zip file that includes source codes.
 3. Move into the top directory of the uncompressed folder using the terminal window.
 4. Type `make OPT=-DUSE_OPENMP ENV=<your-environment>`; replace `<your-environment>` with one of `LINUX`,
-   `HOMEBREW`, and `MACPORTS`. To disable OpenMP, type `make OPT=-DNUSE_OPENMP`.
+   `HOMEBREW`, and `MACPORTS`. Type `make OPT=-DNUSE_OPENMP` when disabling OpenMP.
 
 ## Usage
 
@@ -136,25 +140,19 @@ MUST be `.txt`. If your file is space-delimited, convert it to a tab- or comma-s
 MATLAB, or R, for example. If the file names of target and source point sets are `X.txt` and `Y.txt`,
 these arguments can be omitted.
 
-## Options
-
-The tuning parameters and options are listed in the following sections. Default values
-will be used if they are not specified.
-
 ### Tuning parameters
 
 - `-w [real]`: Omega. Outlier probability in (0,1).
-- `-l [real]`: Lambda. Positive. It controls the expected length of displacement vectors.
-- `-k [real]`: Kappa. Positive. It controls the randomness of mixing coefficients.
+- `-l [real]`: Lambda. Positive. It controls the expected length of displacement vectors. Smaller is longer.
+- `-b [real]`: Beta. Positive. It controls the range where deformation vectors are smoothed.
 - `-g [real]`: Gamma. Positive. It defines the randomness of the point matching during the early stage of the optimization.
+- `-k [real]`: Kappa. Positive. It controls the randomness of mixing coefficients.
 
-BCPD is a unified framework of non-rigid registration and rigid registration.
-If point sets to be registered are smooth surfaces of 3D models, set `-w 0`.
-Set gamma around 2 to 10 if your target point set is largely rotated. Then, the algorithm often converges a better solution.
+The expected length controlled by lambda is sqrt(D/lambda). Set gamma around 2 to 10 if your target point set
+is largely rotated. If input shapes are roughly registered, use `-g0.1` with an option `-ux`.
 The default kappa is infinity, which means that all mixing coefficients are equivalent.
 Do not specify `-k infinity` or extremely large kappa to impose the equivalence of mixing coefficients,
-which sometimes causes an error.
-If lambda (-l) is sufficiently large, e.g. 1e9, BCPD solves rigid registration problems.
+which sometimes causes an error. If lambda (-l) is sufficiently large, e.g., 1e9, BCPD solves rigid registration problems.
 If you would like to solve rigid registration for large point sets, accelerate the algorithm carefully;
 see [Rigid registration](#rigid-registration).
 
@@ -171,31 +169,46 @@ see [Rigid registration](#rigid-registration).
   - `-b [real,real]`: The parameters of the neural network kernel. Do not insert whitespaces before and after comma.
 
 Here, `ym` represents the mth point in Y. Except the neural network kernel, the tuning parameter of
-the kernel functions is denoted by beta, which controls the directional correlation of displacement vectors.
-If the kernel is Gaussian, the expected length of displacement vectors is controlled by lambda regardless of beta.
-Then, the expected length equals to sqrt(D/lambda). For the neural network kernel, the first and second arguments of
-the option `-b` specify the standard deviations of the intercept and linear coefficients, respectively.
+the kernel functions is denoted by beta, which controls the range where deformation vectors are smoothed.
+For the neural network kernel, the first and second arguments of the option `-b` specify the standard deviations
+of the intercept and linear coefficients, respectively.
 
-### Acceleration
+## Acceleration
+![alt text](https://github.com/ohirose/bcpd/blob/master/img/lucy.png?raw=true)
 
-- `-A`: Acceleration with default acceleration parameters, i.e., `-K70 -J300 -p -d7 -e0.15 -f0.2`.
+BCPD can be accelerated inside and outside variational Bayes inference (VBI), separately. The Nystrom method and
+KD-tree search accelerate VBI. The former works before approaching convergence, whereas the latter works near
+convergence. The followoing option accelerates VBI with default parameters:
+
+- `-A`: VBI acceleration with parameters, i.e., `-K70 -J300 -p -d7 -e0.15 -f0.2`.
+
+Downsampling and deformation vector interpolation, called BCPD++, accelerate non-rigid registration
+apart from VBI. BCPD++ is based on the following procedure:
+
+1. Downsampling of point sets.
+2. Non-rigid registration of downsampled point sets.
+3. Interpolation of deformation vectors corresponding to points removed during downsampling.
+
+If N and M are larger than several thousand, activate either the internal or external acceleration.
+If N and M are more than several hundreds of thousands, activate both accelerations.
+
+### Nystrom method
+
 - `-K [int]`: #Nystrom samples for computing G.
 - `-J [int]`: #Nystrom samples for computing P.
 - `-r [int]`: Random number seed for the Nystrom method. Reproducibility is guaranteed if the same number is specified.
+
+Specify `-J300 -K70`, for example. The acceleration based only on the Nystrom method probably fails to converge;
+do not forget activating the KD-tree search.
+
+### KD tree search
+
 - `-p`: KD-tree search is turned on if specified. The following options fine-tune the KD tree search.
   - `-d [real]`: Scale factor of sigma that defines areas to search for neighbors.
   - `-e [real]`: Maximum radius to search for neighbors.
   - `-f [real]`: The value of sigma at which the KD tree search is turned on.
 
-The Nystrom method accelerates the execution by a random sampling scheme.
-It usually runs faster than the direct computation does if M and N are moderately large
-and the number of points to be sampled is set to much smaller than both N and M.
-If N and M are larger than several thousand, specify `-J 300 -K 80 -p`, for example.
-Then, the computation will be faster without sacrificing the registration accuracy.
-We note that, for N and M are more than several hundreds of thousands,
-the optimization might get slow even if the options `-J`, `K`, and `-p` are activated.
-If so, use [BCPD++](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402),
-an additional acceleration scheme using [downsampling](#downsampling) and [interpolation](#interpolation).
+Retry the execution with `-p -f0.3` unless the Nystrom method is replaced by the KD-tree search during optimization.
 
 ### Downsampling
 
@@ -209,20 +222,20 @@ ii) ball resampling with the radius r, and iii) random resampling with equivalen
 The parameter r can be specified as the 3rd argument of `-D`. If r is specified as 0,
 sampling scheme iii) is selected. The numbers of points to be downsampled for target and source point
 sets can be different; specify the `-D` option twice, e.g., `-D'X,6000,0.08' -D'Y,5000,0.05'`.
-For more information, see [paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) and
-[appendix](https://ieeexplore.ieee.org/ielx7/34/4359286/9290402/supp1-3043769.pdf?tp=&arnumber=9290402).
+-For more information, see [paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) and
+-[appendix](https://ieeexplore.ieee.org/ielx7/34/4359286/9290402/supp1-3043769.pdf?tp=&arnumber=9290402).
 
 ### Interpolation
 
-- `-L [int]`: #Nystrom samples for accelerating interpolation.
+- `-L [int]`: #Nystrom samples for accelerating interpolation. E.g., `-L100`.
 
-[BCPD++](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402),
-an acceleration scheme based on downsampling and deformation vector interpolation,
-further accelerates non-rigid point set registration besides the [acceleration](#acceleration) inside BCPD.
-Specify `-L100`, for example, if you would like to accelerate non-rigid registration with downsampling.
 The resulting registered shape with interpolation is output to the file with the suffix `y.interpolated.txt`.
-If the `-L` option is unspecified and the lambda is relatively small, the method executes
-deformation vector interpolation without low-rank approximations, which will be quite slow or might fail.
+If the `-L` option is unspecified and the lambda is relatively small, the method interpolate deformation vectors
+without low-rank approximations, which will be quite slow or might fail.
+
+## Options
+
+Default values will be used if they are not specified.
 
 ### Convergence
 
@@ -242,11 +255,14 @@ surfaces with moderate numbers of points, specify `-c 1e-5` or `-c 1e-6`.
   - `e`: Each of X and Y is normalized separately (default).
   - `x`: X and Y are normalized using the location and the scale of X.
   - `y`: X and Y are normalized using the location and the scale of Y.
-  - `n` : Normalization is skipped.
+  - `n` : Normalization is skipped (not recommended).
+
+Using `-ux` or `-uy` is recommended with `-g0.1` if input point sets are roughly registered.
+The option `-n` is not recommended because choosing beta and lambda becomes non-intuitive.
 
 ### File output
 
-- `-o [string]`: Prefix of file names to be output.
+- `-o [string]`: Prefix of output file names.
 - `-s [string]`: Save variables by specifying them as the argument of the option, e.g., `-sYP`.
   - `y`: Resulting deformed shape (=y).
   - `x`: Target shape with alignment (=x).
@@ -261,10 +277,10 @@ surfaces with moderate numbers of points, specify `-c 1e-5` or `-c 1e-6`.
   - `t`: Computing time (real/cpu) and sigma for each loop.
   - `A`: All of the above.
 
-The resulting deformed shape y will be output without `-s` option. Shape x is roughly the same
+The resulting deformed shape y will be output without the `-s` option. Shape x is roughly the same
 as y if two point sets are successfully registered. If at least one of `u`,`v`, and `T` is
-specified as an argument of `-s`, normalized X and Y before optimization, which are used as
-inputs of BCPD, will be output besides the variables. If `Y` is specified as an argument of
+specified as an argument of `-s`, X and Y after normalization inputs of BCPD, will be output
+besides the variables. If `Y` is specified as an argument of
 `-s`, the optimization trajectory will be saved to the binary file `.optpath.bin`.
 The trajectory can be viewed using scripts: `optpath.m` for 2D data and
 `optpath3.m` for 3D data. Saving a trajectory is memory-inefficient. Disable it if both N and M
@@ -282,7 +298,7 @@ the output of P might become time-consuming.
 ## Rigid registration
 ![alt text](https://github.com/ohirose/bcpd/blob/master/img/rigid.png?raw=true)
 
-BCPD solves rigid registration problems if lambda is sufficiently large, e.g. 1e9. To stabilize
+BCPD solves rigid registration problems if lambda is sufficiently large, e.g., 1e9. To stabilize
 the registration performance of the rigid registration, accelerate the algorithm carefully.
 For example, use the following option:
 
@@ -292,3 +308,4 @@ Otherwise, the computation will be unstable. If two point sets are roughly regis
 it is a good choice to use `-g0.1 -ux` instead of `-g3`. Do not output P, i.e., specify neither
 `-sP` nor `-sA` because the number of nonzero elements in P will be enormous.
 Several examples can be watched [HERE](https://youtu.be/SoUTbH2tJj8).
+
