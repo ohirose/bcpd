@@ -1,8 +1,8 @@
 
 # Bayesian Coherent Point Drift (BCPD/BCPD++)
 
-This software implements Bayesian coherent point drift (BCPD), a non-rigid point matching algorithm
-based on variational Bayesian inference. The algorithm combines rigid CPD and non-rigid CPD
+This software implements a non-rigid point matching algorithm, Bayesian coherent point drift (BCPD).
+The algorithm combines rigid CPD and non-rigid CPD
 as a single algorithm. The acceleration method called BCPD++ efficiently reduces computing time.
 The software has the following characteristics:
 
@@ -143,12 +143,12 @@ these arguments can be omitted.
 ### Tuning parameters
 
 - `-w [real]`: Omega. Outlier probability in (0,1).
-- `-l [real]`: Lambda. Positive. It controls the expected length of displacement vectors. Smaller is longer.
+- `-l [real]`: Lambda. Positive. It controls the expected length of deformation vectors. Smaller is longer.
 - `-b [real]`: Beta. Positive. It controls the range where deformation vectors are smoothed.
-- `-g [real]`: Gamma. Positive. It defines the randomness of the point matching during the early stage of the optimization.
+- `-g [real]`: Gamma. Positive. It defines the randomness of the point matching at the beggining of the optimization.
 - `-k [real]`: Kappa. Positive. It controls the randomness of mixing coefficients.
 
-The expected length controlled by lambda is sqrt(D/lambda). Set gamma around 2 to 10 if your target point set
+The expected length of deformation vectors is sqrt(D/lambda). Set gamma around 2 to 10 if your target point set
 is largely rotated. If input shapes are roughly registered, use `-g0.1` with an option `-ux`.
 The default kappa is infinity, which means that all mixing coefficients are equivalent.
 Do not specify `-k infinity` or extremely large kappa to impose the equivalence of mixing coefficients,
@@ -158,7 +158,7 @@ see [Rigid registration](#rigid-registration).
 
 ### Kernel functions
 
-- `-G [1-5]`: Switch kernel functions. The Gaussian kernel `exp(-||ym-ym'||^2/2*beta^2)` is used unless specified.
+- `-G [1-5]`: Switch kernel functions.
   - `-G1` Inverse multiquadric: `(||ym-ym'||^2+beta^2)^(-1/2)`
   - `-G2` Rational quadratic: `1-||ym-ym'||^2/(||ym-ym'||^2+beta^2)`
   - `-G3` Laplace: `exp(-|ym-ym'|/beta)`
@@ -168,6 +168,7 @@ see [Rigid registration](#rigid-registration).
   - `-b [real]`: Beta. The parameter of a kernel function except the neural network kernel.
   - `-b [real,real]`: The parameters of the neural network kernel. Do not insert whitespaces before and after comma.
 
+The Gaussian kernel `exp(-||ym-ym'||^2/2*beta^2)` is used unless specified.
 Here, `ym` represents the mth point in Y. Except the neural network kernel, the tuning parameter of
 the kernel functions is denoted by beta, which controls the range where deformation vectors are smoothed.
 For the neural network kernel, the first and second arguments of the option `-b` specify the standard deviations
@@ -183,11 +184,9 @@ convergence. The followoing option accelerates VBI with default parameters:
 - `-A`: VBI acceleration with parameters, i.e., `-K70 -J300 -p -d7 -e0.15 -f0.2`.
 
 Downsampling and deformation vector interpolation, called BCPD++, accelerate non-rigid registration
-apart from VBI. BCPD++ is based on the following procedure:
+outside VBI. For example, the following options activate BCPD++:
 
-1. Downsampling of point sets.
-2. Non-rigid registration of downsampled point sets.
-3. Interpolation of deformation vectors corresponding to points removed during downsampling.
+- `-DB,5000,0.08 -L100`: BCPD++ acceleration outside VBI.
 
 If N and M are larger than several thousand, activate either the internal or external acceleration.
 If N and M are more than several hundreds of thousands, activate both accelerations.
@@ -208,6 +207,7 @@ do not forget activating the KD-tree search.
   - `-e [real]`: Maximum radius to search for neighbors.
   - `-f [real]`: The value of sigma at which the KD tree search is turned on.
 
+The default parameters are `-d7 -e0.15 -f0.2`.
 Retry the execution with `-p -f0.3` unless the Nystrom method is replaced by the KD-tree search during optimization.
 
 ### Downsampling
@@ -222,8 +222,8 @@ ii) ball resampling with the radius r, and iii) random resampling with equivalen
 The parameter r can be specified as the 3rd argument of `-D`. If r is specified as 0,
 sampling scheme iii) is selected. The numbers of points to be downsampled for target and source point
 sets can be different; specify the `-D` option twice, e.g., `-D'X,6000,0.08' -D'Y,5000,0.05'`.
--For more information, see [paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) and
--[appendix](https://ieeexplore.ieee.org/ielx7/34/4359286/9290402/supp1-3043769.pdf?tp=&arnumber=9290402).
+For more information, see [paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) and
+[appendix](https://ieeexplore.ieee.org/ielx7/34/4359286/9290402/supp1-3043769.pdf?tp=&arnumber=9290402).
 
 ### Interpolation
 
@@ -235,7 +235,7 @@ without low-rank approximations, which will be quite slow or might fail.
 
 ## Options
 
-Default values will be used if they are not specified.
+Default values will be used unless specified.
 
 ### Convergence
 
@@ -279,7 +279,7 @@ The option `-n` is not recommended because choosing beta and lambda becomes non-
 
 The resulting deformed shape y will be output without the `-s` option. Shape x is roughly the same
 as y if two point sets are successfully registered. If at least one of `u`,`v`, and `T` is
-specified as an argument of `-s`, X and Y after normalization inputs of BCPD, will be output
+specified as an argument of `-s`, X and Y after normalization will be output
 besides the variables. If `Y` is specified as an argument of
 `-s`, the optimization trajectory will be saved to the binary file `.optpath.bin`.
 The trajectory can be viewed using scripts: `optpath.m` for 2D data and
