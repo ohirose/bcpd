@@ -6,9 +6,9 @@ The algorithm combines rigid CPD and non-rigid CPD
 as a single algorithm. The acceleration method called BCPD++ efficiently reduces computing time.
 The software has the following characteristics:
 
-- It performs non-rigid registration with robustness against target rotation.
+- **Scalability**. It registers point sets containing over 10 million points.
+- It performs non-rigid registration with robustness against outliers and target rotation.
 - It performs rigid registration and finds the overlap between partial 3D scans under appropriate parameters.
-- It registers point sets containing over 10 million points.
 
 For more information, see [Hirose2020a](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307) (BCPD)
 and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) (BCPD++).
@@ -132,10 +132,10 @@ See MATLAB scripts in the `demo` folder regarding the usage of the binary file.
 
 ### Input data
 
-- 1st argument (specified by `-x`): The target shape represented as a matrix of size N x D.
-- 2nd argument (specified by `-y`): The source shape represented as a matrix of size M x D.
+- `-x [file]`: The target shape represented as a matrix of size N x D.
+- `-y [file]`: The source shape represented as a matrix of size M x D.
 
-Currently, only tab- and comma-separated files are accepted, and the extensions of input files
+Tab- and comma-separated files are accepted, and the extensions of input files
 MUST be `.txt`. If your file is space-delimited, convert it to a tab- or comma-separated file using Excel,
 MATLAB, or R, for example. If the file names of target and source point sets are `X.txt` and `Y.txt`,
 these arguments can be omitted.
