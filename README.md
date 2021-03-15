@@ -7,7 +7,7 @@ as a single algorithm. The acceleration method called BCPD++ efficiently reduces
 The software has the following characteristics:
 
 - **Scalability**. It non-rigidly registers point sets containing over 10 million points.
-- **Robustness** It performs non-rigid registration with robustness against outliers and target rotation.
+- **Robustness**. It performs non-rigid registration with robustness against outliers and target rotation.
 - It performs rigid registration and finds the overlap between partial 3D scans under appropriate parameters.
 
 For more information, see [Hirose2020a](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307) (BCPD)
