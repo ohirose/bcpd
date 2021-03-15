@@ -85,7 +85,7 @@ MATLAB scripts under the `demo` folder will demonstrate various examples.
 
 ### Shape transfer
 Bash scripts under the `demo` folder will demonstrate Shape transfer/BCPD++ examples without MATLAB.
-Several examples can be watched [HERE](https://youtu.be/pbLVMDj1Zro).
+Several examples can be watched [HERE](https://youtu.be/9GIoqyNra4Q).
 
 - Go to the `demo/shapeTransfer` folder using your terminal window.
 - Run a demo script, e.g., type `./shapeTransferA.sh` in the terminal.
