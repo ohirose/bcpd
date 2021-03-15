@@ -6,8 +6,8 @@ The algorithm combines rigid CPD and non-rigid CPD
 as a single algorithm. The acceleration method called BCPD++ efficiently reduces computing time.
 The software has the following characteristics:
 
-- **Scalability**. It registers point sets containing over 10 million points.
-- It performs non-rigid registration with robustness against outliers and target rotation.
+- **Scalability**. It non-rigidly registers point sets containing over 10 million points.
+- **Robustness** It performs non-rigid registration with robustness against outliers and target rotation.
 - It performs rigid registration and finds the overlap between partial 3D scans under appropriate parameters.
 
 For more information, see [Hirose2020a](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307) (BCPD)
@@ -260,6 +260,13 @@ surfaces with moderate numbers of points, specify `-c 1e-5` or `-c 1e-6`.
 Using `-ux` or `-uy` is recommended with `-g0.1` if input point sets are roughly registered.
 The option `-n` is not recommended because choosing beta and lambda becomes non-intuitive.
 
+### Terminal output
+
+- `-v`: Print the version and the simple instruction of this software.
+- `-q`: Quiet mode. Print nothing.
+- `-W`: Disable warnings.
+- `-h`: History mode. Alternative terminal output regarding opmization.
+
 ### File output
 
 - `-o [string]`: Prefix of output file names.
@@ -287,13 +294,6 @@ The trajectory can be viewed using scripts: `optpath.m` for 2D data and
 are more than several hundreds of thousands. If `P` is specified as an argument of `-s`,
 nonzero elements of matching probability P will be output. If the optimization is not converged,
 the output of P might become time-consuming.
-
-### Terminal output
-
-- `-q`: Quiet mode. Print nothing.
-- `-h`: History mode. Status information for each loop will not be cleared if specified.
-- `-v`: Print the version and the simple instruction of this software.
-- `-W`: Disable warnings.
 
 ## Rigid registration
 ![alt text](https://github.com/ohirose/bcpd/blob/master/img/rigid.png?raw=true)
