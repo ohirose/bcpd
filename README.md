@@ -8,10 +8,14 @@ The software has the following characteristics:
 
 - **Scalability**. It non-rigidly registers point sets containing over 10 million points.
 - **Robustness**. It performs non-rigid registration with robustness against outliers and target rotation.
-- It performs rigid registration and finds the overlap between partial 3D scans under appropriate parameters.
+- **Multipurpose**. It performs rigid registration and finds the overlap between partial 3D scans under appropriate parameters.
 
 For more information, see [Hirose2020a](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307) (BCPD)
 and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) (BCPD++).
+Also, several examples can be watched in
+[[Video 1]](https://youtu.be/pbLVMDj1Zro),
+[[Video 2]](https://youtu.be/cET6gKAvjw0),
+[[Video 3]](https://youtu.be/SoUTbH2tJj8).
 ![alt text](https://github.com/ohirose/bcpd/blob/master/img/transfer.jpg?raw=true)
 
 ## Table of Contents
@@ -48,12 +52,10 @@ and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=92904
 The details of the algorithms are available in the following papers:
 - [BCPD++] O. Hirose,
   "[Acceleration of non-rigid point set registration with downsampling and Gaussian process regression](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402),"
-  IEEE TPAMI, Dec 2020.
+  [IEEE TPAMI](https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=34), Dec 2020.
 - [BCPD] O. Hirose,
   "[A Bayesian formulation of coherent point drift](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307),"
-  IEEE TPAMI, Feb 2020.
-  - Supplementary Video 1 in the above paper is available [HERE](https://youtu.be/cET6gKAvjw0).
-  If the video file cannot be accessed, go to [online-materials](https://ieeexplore.ieee.org/document/8985307/media#media).
+  [IEEE TPAMI](https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=34), Feb 2020.
 
 ## Performance
 
@@ -85,7 +87,7 @@ MATLAB scripts under the `demo` folder will demonstrate various examples.
 
 ### Shape transfer
 Bash scripts under the `demo` folder will demonstrate Shape transfer/BCPD++ examples without MATLAB.
-Several examples can be watched [HERE](https://youtu.be/9GIoqyNra4Q).
+Several examples can be watched [HERE](https://youtu.be/pbLVMDj1Zro).
 
 - Go to the `demo/shapeTransfer` folder using your terminal window.
 - Run a demo script, e.g., type `./shapeTransferA.sh` in the terminal.
