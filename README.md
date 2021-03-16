@@ -8,7 +8,7 @@ The software has the following characteristics:
 
 - **Scalability**. It non-rigidly registers point sets containing over 10 million points.
 - **Robustness**. It performs non-rigid registration with robustness against outliers and target rotation.
-- **Multipurpose**. It performs rigid registration and finds the overlap between partial 3D scans under appropriate parameters.
+- **Multipurpose**. It performs rigid registration under appropriate parameters to find the overlap between partial 3D scans.
 
 For more information, see [Hirose2020a](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307) (BCPD)
 and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) (BCPD++).
