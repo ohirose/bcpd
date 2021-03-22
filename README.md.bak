@@ -22,7 +22,7 @@ Also, several examples can be watched in
 ## Table of Contents
 
 1. [Papers](#papers)
-2. [Performance](#performance)
+2. [Peformance](#performance)
     + [BCPD vs CPD](#bcpd-vs-cpd)
     + [BCPD vs BCPD++](#bcpd-vs-bcpd)
 3. [Demo](#demo)
@@ -106,7 +106,7 @@ Therefore, it might be quite slower than the one compiled in a Mac/Linux system.
 
 1. Install the LAPACK library if not installed. If your machine is a Mac, install Xcode, Xcode command-line tools,
    and MacPorts (or Homebrew).
-2. Download and decompress the zip file that includes source codes.
+2. Download and uncompress the zip file that includes source codes.
 3. Move into the top directory of the uncompressed folder using the terminal window.
 4. Type `make OPT=-DUSE_OPENMP ENV=<your-environment>`; replace `<your-environment>` with one of `LINUX`,
    `HOMEBREW`, and `MACPORTS`. Type `make OPT=-DNUSE_OPENMP` when disabling OpenMP.
@@ -148,7 +148,7 @@ these arguments can be omitted.
 - `-w [real]`: Omega. Outlier probability in (0,1).
 - `-l [real]`: Lambda. Positive. It controls the expected length of deformation vectors. Smaller is longer.
 - `-b [real]`: Beta. Positive. It controls the range where deformation vectors are smoothed.
-- `-g [real]`: Gamma. Positive. It defines the randomness of the point matching at the beginning of the optimization.
+- `-g [real]`: Gamma. Positive. It defines the randomness of the point matching at the beggining of the optimization.
 - `-k [real]`: Kappa. Positive. It controls the randomness of mixing coefficients.
 
 The expected length of deformation vectors is sqrt(D/lambda). Set gamma around 2 to 10 if your target point set
@@ -181,7 +181,7 @@ of the intercept and linear coefficients, respectively.
 
 BCPD can be accelerated inside and outside variational Bayes inference (VBI), separately. The Nystrom method and
 KD-tree search accelerate VBI. The former works before approaching convergence, whereas the latter works near
-convergence. The following option accelerates VBI with default parameters:
+convergence. The followoing option accelerates VBI with default parameters:
 
 - `-A`: VBI acceleration with parameters, i.e., `-K70 -J300 -p -d7 -e0.15 -f0.2`.
 
@@ -267,7 +267,7 @@ The option `-n` is not recommended because choosing beta and lambda becomes non-
 - `-v`: Print the version and the simple instruction of this software.
 - `-q`: Quiet mode. Print nothing.
 - `-W`: Disable warnings.
-- `-h`: History mode. Alternative terminal output regarding optimization.
+- `-h`: History mode. Alternative terminal output regarding opmization.
 
 ### File output
 
