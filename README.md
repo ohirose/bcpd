@@ -8,7 +8,7 @@ The software enjoys the following characteristics:
 
 - **Scalability**. It non-rigidly registers point sets containing over 10 million points.
 - **Robustness**. It performs non-rigid registration with robustness against outliers and target rotation.
-- **Multipurpose**. It performs rigid registration under appropriate parameters to find the overlap between partial 3D scans.
+- **Multipurpose**. It performs rigid registration under appropriate parameters to find the partial overlap between 3D scans.
 
 For more information, see [Hirose2020a](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307) (BCPD)
 and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) (BCPD++).
@@ -57,6 +57,9 @@ The details of the algorithms are available in the following papers:
 - [BCPD] O. Hirose,
   "[A Bayesian formulation of coherent point drift](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307),"
   [IEEE TPAMI](https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=34), Feb 2020.
+  - The article's [supplementary document](https://www.dropbox.com/s/pkgw2xxd0f3anfk/bcpd-appendix.pdf?dl=1)
+    contains proofs of propositions.
+
 
 ## Performance
 
@@ -108,8 +111,8 @@ Therefore, it might be quite slower than the one compiled in a Mac/Linux system.
    and MacPorts (or Homebrew).
 2. Download and decompress the zip file that includes source codes.
 3. Move into the top directory of the uncompressed folder using the terminal window.
-4. Type `make OPT=-DUSE_OPENMP ENV=<your-environment>`; replace `<your-environment>` with one of `LINUX`,
-   `HOMEBREW`, and `MACPORTS`. Type `make OPT=-DNUSE_OPENMP` when disabling OpenMP.
+4. Type `make OPT=-DUSE_OPENMP ENV=<your-environment>`; replace `<your-environment>` with `LINUX`,
+   `HOMEBREW`, or `MACPORTS`. Type `make OPT=-DNUSE_OPENMP` when disabling OpenMP.
 
 ## Usage
 
@@ -140,8 +143,8 @@ See MATLAB scripts in the `demo` folder regarding the usage of the binary file.
 
 Tab- and comma-separated files are accepted, and the extensions of input files
 MUST be `.txt`. If your file is space-delimited, convert it to a tab- or comma-separated file using Excel,
-MATLAB, or R, for example. If the file names of target and source point sets are `X.txt` and `Y.txt`,
-these arguments can be omitted.
+MATLAB, or R, for example. Do not insert any tab (or comma) symbol after the last column.
+If the file names of target and source point sets are `X.txt` and `Y.txt`, these arguments can be omitted.
 
 ### Tuning parameters
 
@@ -161,7 +164,7 @@ see [Rigid registration](#rigid-registration).
 
 ### Kernel functions
 
-- `-G [1-5]`: Switch kernel functions.
+- `-G [1-4]`: Switch kernel functions.
   - `-G1` Inverse multiquadric: `(||ym-ym'||^2+beta^2)^(-1/2)`
   - `-G2` Rational quadratic: `1-||ym-ym'||^2/(||ym-ym'||^2+beta^2)`
   - `-G3` Laplace: `exp(-|ym-ym'|/beta)`
@@ -219,11 +222,14 @@ Retry the execution with `-p -f0.3` unless the Nystrom method is replaced by the
   - 2nd argument: The number of points to be extracted by the downsampling.
   - 3rd argument: The voxel size or ball radius required for downsampling.
 
-Input point sets can be downsampled by i) voxel-grid resampling with voxel width r,
-ii) ball resampling with the radius r, and iii) random resampling with equivalent sampling probabilities.
+Input point sets can be downsampled by the following algorithms:
+1. voxel-grid resampling with voxel width r,
+2. ball resampling with the radius r, and
+3. random resampling with equivalent sampling probabilities.
+
 The parameter r can be specified as the 3rd argument of `-D`. If r is specified as 0,
-sampling scheme iii) is selected. The numbers of points to be downsampled for target and source point
-sets can be different; specify the `-D` option twice, e.g., `-D'X,6000,0.08' -D'Y,5000,0.05'`.
+sampling scheme (3) is selected. The numbers of points in downsampled target and source point sets
+can be different; specify the `-D` option twice, e.g., `-D'X,6000,0.08' -D'Y,5000,0.05'`.
 For more information, see [paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) and
 [appendix](https://ieeexplore.ieee.org/ielx7/34/4359286/9290402/supp1-3043769.pdf?tp=&arnumber=9290402).
 
@@ -231,9 +237,9 @@ For more information, see [paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp
 
 - `-L [int]`: #Nystrom samples for accelerating interpolation. E.g., `-L100`.
 
+Downsampling automatically activates the deformation vector interpolation. However, if the `-L` option is
+unspecified, the method runs without low-rank approximations; the execution will be quite slow or might fail.
 The resulting registered shape with interpolation is output to the file with the suffix `y.interpolated.txt`.
-If the `-L` option is unspecified and the lambda is relatively small, the method interpolate deformation vectors
-without low-rank approximations, which will be quite slow or might fail.
 
 ## Options
 
@@ -260,7 +266,7 @@ surfaces with moderate numbers of points, specify `-c 1e-5` or `-c 1e-6`.
   - `n` : Normalization is skipped (not recommended).
 
 Using `-ux` or `-uy` is recommended with `-g0.1` if input point sets are roughly registered.
-The option `-n` is not recommended because choosing beta and lambda becomes non-intuitive.
+The option `-un` is not recommended because choosing beta and lambda becomes non-intuitive.
 
 ### Terminal output
 
