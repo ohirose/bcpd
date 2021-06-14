@@ -59,6 +59,7 @@ The details of the algorithms are available in the following papers:
   [IEEE TPAMI](https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=34), Feb 2020.
   - The article's [supplementary document](https://www.dropbox.com/s/pkgw2xxd0f3anfk/bcpd-appendix.pdf?dl=1)
     contains proofs of propositions.
+  - Fig. 15 in the print version was accidentally replaced by Fig. 3 during the publication process after the review process. To see the correct one, please see [the final proof](https://www.dropbox.com/s/n2rbjss9um1aiz6/tpami-hirose-2971687-final-proof.pdf?dl=1) just before the publication or [the early access version](https://www.dropbox.com/s/6n8wxlsx23til9u/tpami-2971687-pp.pdf?dl=1).
 
 
 ## Performance
