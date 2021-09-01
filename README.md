@@ -60,7 +60,7 @@ The details of the algorithms are available in the following papers:
   - The article's [supplementary document](https://www.dropbox.com/s/pkgw2xxd0f3anfk/bcpd-appendix.pdf?dl=1)
     contains proofs of propositions.
   - Fig. 15 in the print version was accidentally replaced by Fig. 3 during the publication process after the review process. To see the correct one, please see [the final proof](https://www.dropbox.com/s/n2rbjss9um1aiz6/tpami-hirose-2971687-final-proof.pdf?dl=1) just before the publication or [the early access version](https://www.dropbox.com/s/6n8wxlsx23til9u/tpami-2971687-pp.pdf?dl=1).
-
+  - An [erratum](https://ieeexplore.ieee.org/document/9506964) correcting the above error has been published.
 
 ## Performance
 
@@ -114,6 +114,9 @@ Therefore, it might be quite slower than the one compiled in a Mac/Linux system.
 3. Move into the top directory of the uncompressed folder using the terminal window.
 4. Type `make OPT=-DUSE_OPENMP ENV=<your-environment>`; replace `<your-environment>` with `LINUX`,
    `HOMEBREW`, or `MACPORTS`. Type `make OPT=-DNUSE_OPENMP` when disabling OpenMP.
+
+The default installation path for Homebrew seems to be changed. If the compilation under Homebrew fails,
+please replace the path `/usr/local/` with `/opt/homebrew/` in `makefile`.
 
 ## Usage
 
@@ -293,11 +296,15 @@ The option `-un` is not recommended because choosing beta and lambda becomes non
   - `t`: Computing time (real/cpu) and sigma for each loop.
   - `A`: All of the above.
 
-The resulting deformed shape y will be output without the `-s` option. Shape x is roughly the same
-as y if two point sets are successfully registered. If at least one of `u`,`v`, and `T` is
-specified as an argument of `-s`, X and Y after normalization will be output
-besides the variables. If `Y` is specified as an argument of
-`-s`, the optimization trajectory will be saved to the binary file `.optpath.bin`.
+The resulting deformed shape y will be output without the `-s` option. All output variables
+except for `output_[y/x].txt` and `output_y.interpolated.txt` are normalized.
+In other words, only these variables are denormalized.
+Therefore, the transformation `(v, s, R, t)` can only be applied to the normalized source shape,
+named as `output_normY.txt`. If at least one of `u`,`v`, and `T` is specified as an argument
+of `-s`, BCPD will output normalized input point sets, i.e., `output_norm[X/Y].txt`.
+
+If `Y` is specified as an argument of `-s`, the optimization trajectory
+will be saved to the binary file `.optpath.bin`.
 The trajectory can be viewed using scripts: `optpath.m` for 2D data and
 `optpath3.m` for 3D data. Saving a trajectory is memory-inefficient. Disable it if both N and M
 are more than several hundreds of thousands. If `P` is specified as an argument of `-s`,
