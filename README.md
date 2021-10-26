@@ -108,7 +108,7 @@ Therefore, it might be quite slower than the one compiled in a Mac/Linux system.
 
 ### MacOS and Linux
 
-1. Install the LAPACK library if not installed. If your machine is a Mac, install Xcode, Xcode command-line tools,
+1. Install OpenMP and the LAPACK library if not installed. If your machine is a Mac, install Xcode, Xcode command-line tools,
    and MacPorts (or Homebrew).
 2. Download and decompress the zip file that includes source codes.
 3. Move into the top directory of the uncompressed folder using the terminal window.
@@ -199,6 +199,9 @@ outside VBI. For example, the following options activate BCPD++:
 
 If N and M are larger than several thousand, activate either the internal or external acceleration.
 If N and M are more than several hundreds of thousands, activate both accelerations.
+Also, the acceleration methods reduce memory consumption. Either internal or external acceleration method
+**MUST** be activated to avoid a memory allocation error for such a large dataset.
+Otherwise, BCPD sometimes fails without any error notice.
 
 ### Nystrom method
 
