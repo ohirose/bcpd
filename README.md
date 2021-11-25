@@ -61,6 +61,7 @@ The details of the algorithms are available in the following papers:
     contains proofs of propositions.
   - Fig. 15 in the print version was accidentally replaced by Fig. 3 during the publication process after the review process. To see the correct one, please see [the final proof](https://www.dropbox.com/s/n2rbjss9um1aiz6/tpami-hirose-2971687-final-proof.pdf?dl=1) just before the publication or [the early access version](https://www.dropbox.com/s/6n8wxlsx23til9u/tpami-2971687-pp.pdf?dl=1).
   - An [erratum](https://ieeexplore.ieee.org/document/9506964) correcting the above error has been published.
+  - In Fig. 2, please replace ![trace-before](https://github.com/ohirose/bcpd/blob/master/img/trace-before.png?raw=true) with ![trace-after](https://github.com/ohirose/bcpd/blob/master/img/trace-after.png?raw=true).
 
 ## Performance
 
