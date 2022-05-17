@@ -62,7 +62,7 @@ The details of the algorithms are available in the following papers:
   - Fig. 15 in the print version was accidentally replaced by Fig. 3 during the publication process after the review process. See an [erratum](https://ieeexplore.ieee.org/document/9506964) correcting the error.
   - In Fig. 2, following Proposition 3, please replace ![trace-before](https://github.com/ohirose/bcpd/blob/master/img/trace-before.png?raw=true) with ![trace-after](https://github.com/ohirose/bcpd/blob/master/img/trace-after.png?raw=true) as follows:
 
-<img src="https://github.com/ohirose/devbcpd/blob/new/feat/geodesic/img/correction.png" alt="correction" width="600"/>
+<img src="https://github.com/ohirose/bcpd/blob/master/img/correction.png" alt="correction" width="600"/>
 
 ## Performance
 
