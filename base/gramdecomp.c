@@ -34,12 +34,12 @@ void gramdecomp(
   int             D,                /* I |    1    | dimension               */
   int             M,                /* I |    1    | #points                 */
   int             K,                /* I |    1    | #nystrom samples        */
-  const double  * bet,              /* I |  1 or 2 | parameters of a kernel  */
+  const double    bet,              /* I |    1    | kernel parameter        */
   double         (*kernel)(         /* I |   ptr   | kernel function         */
                    const double *,  /* I |    D    | point 1                 */
                    const double *,  /* I |    D    | point 2                 */
                    int,             /* I |    1    | D: dimension            */
-                   const double *   /* I |  1 or 2 | parameters of a kernel  */
+                   double           /* I |    1    | kernel parameter        */
                  )
   ){
 

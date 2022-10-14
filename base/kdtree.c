@@ -27,6 +27,8 @@
 
 #define SQ(x) ((x)*(x))
 
+static void swap(double *a, double *b){double tmp; tmp=*a; *a=*b; *b=tmp;}
+
 static inline void divide(
    int          *  b,    /*  I/O | 5N | array to be divided         */
    double       *  v,    /*   W  | 2N | working memory              */
@@ -40,7 +42,7 @@ static inline void divide(
   int *sz=b+N,*bl=b+2*N,*bc=b+3*N,*br=b+4*N;
 
   *sz=K; /* store original array size */
-  for(k=0;k<K;k++){v[k]=X[d+D*b[k]];}
+  for(k=0;k<K;k++){v[k]=X[d+D*b[k]];} swap(v,v+K/2);
 
   if (K==1) bl[0]=b[c];
   else { med=median(v,w,K);
@@ -78,6 +80,18 @@ void kdtree(
     if(sl){divide(bl,v,sl,X,D,N,p+1);S[q++]=bl-a;cl=sl/2;nl=bl[cl];T[nl]=p+1;T[n+N*1]=nl;}
     if(sr){divide(br,v,sr,X,D,N,p+1);S[q++]=br-a;cr=sr/2;nr=br[cr];T[nr]=p+1;T[n+N*2]=nr;}
   }
+}
+
+int *kdtree_build(const double *X, int D, int N){
+  int *T,*wi; double *wd;
+
+  T =calloc(3*N+1,sizeof(int));
+  wi=calloc(6*N,  sizeof(int));
+  wd=calloc(2*N,  sizeof(double));
+  kdtree(T,wi,wd,X,D,N);
+  free(wi); free(wd);
+
+  return T;
 }
 
 static double dist(const double *x, const double *y, double D){
@@ -159,3 +173,39 @@ void nnsearch(
      else      {if(nl>=0)S[q++]=nl; if(nr>=0&&u<=*e)S[q++]=nr;}
   }
 }
+
+void knnsearch(
+       int           *Q,  /*  O  |  1+K  | k nearest neighbors (+size) */
+       int            K,  /* I/O | const.| #neighbors                  */
+       double         e,  /* I/O | const.| maximum distance            */
+       const double  *y,  /*  I  | const.| the point of interest       */
+       int            me, /*  I  | const.| y's index if y in X else <0 */
+       const double  *X,  /*  I  |  DxN  | points                      */
+       const int     *T,  /*  I  | 3xN+1 | kdtree                      */
+       int            D,  /*  I  | const.| dimension                   */
+       int            N   /*  I  | const.| #points                     */
+     ){
+
+  int d,p,q=0,k=0,n=T[3*N],nl,nr,kmax=0,num; int S[MAXTREEDEPTH];
+  double u,v,dst,val;
+
+  num=0; for(k=1;k<K;k++) Q[k]=-1;
+
+  S[q++]=n;
+  while(q){assert(q>=0||(q&&S[q-1]>=0)); n=S[--q];
+    nl=T[n+N*1]; p=T[n]; assert(p<MAXTREEDEPTH);
+    nr=T[n+N*2]; d=p%D;
+
+    dst=dist(y,X+D*n,D);
+    if(dst<e&&n!=me){ /* exclude y if 'me' is non-negative */
+      if(num< K){Q[++num]=n;}
+      else      {Q[kmax ]=n;assert(kmax>0);} /* replace with current max */
+      if(num==K) for(k=1;k<=K;k++){val=dist(y,X+D*Q[k],D);if(k==1||val>e){e=val;kmax=k;}} /* update max */
+    }
+
+    v=y[d]-X[d+D*n]; u=fabs(v);
+    if   (v>0){if(nl>=0&&u<=e)S[q++]=nl; if(nr>=0)S[q++]=nr;}
+    else      {if(nr>=0&&u<=e)S[q++]=nr; if(nl>=0)S[q++]=nl;}
+  } *Q=num;
+}
+

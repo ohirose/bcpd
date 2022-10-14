@@ -31,7 +31,8 @@ double  ** calloc2d (const int M, const int N);
 int     ** calloc2i (const int M, const int N);
 double *** calloc3d (const int L, const int M, const int N);
 short   ** calloc2s (const int M, const int N);
-void       free2d   (double **a, int M, int N);
+void       free2d   (double **a, int M);
+void       free2i   (int    **a, int M);
 void       fprint2d (const double **a, int M, int N);
 
 double **  read2d   (int *nr, int *nc, char *mode, const char *file, const char *na);

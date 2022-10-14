@@ -32,6 +32,8 @@
 #include"../base/kdtree.h"
 #include"../base/kernel.h"
 #include"../base/sampling.h"
+#include"../base/sgraph.h"
+#include"../base/geokdecomp.h"
 #include"bcpd.h"
 #include"info.h"
 #include"norm.h"
@@ -47,12 +49,12 @@ void save_variable(const char *prefix, const char *suffix,const double *var, int
   if(trans==TRANSPOSE){
     buf=calloc2d(J,D);
     for(j=0;j<J;j++)for(d=0;d<D;d++) buf[j][d]=var[d+D*j];
-    write2d(fn,(const double **)buf,J,D,fmt,"NA"); free2d(buf,J,D);
+    write2d(fn,(const double **)buf,J,D,fmt,"NA"); free2d(buf,J);
   }
   else {
     buf=calloc2d(D,J);
     for(j=0;j<J;j++)for(d=0;d<D;d++) buf[d][j]=var[d+D*j];
-    write2d(fn,(const double **)buf,D,J,fmt,"NA"); free2d(buf,D,J);
+    write2d(fn,(const double **)buf,D,J,fmt,"NA"); free2d(buf,D);
   }
 
   return;
@@ -84,7 +86,7 @@ void save_corresp(
     /* compute P, c, e */
     val=c;top=ct=0;do{eballsearch_next(&m,S,&top,X+D*n,rad,y,T,D,M);if(m>=0)l[ct++]=m;}while(top);
     if(!ct){nnsearch(&m,&min,X+D*n,y,T,D,M);l[ct++]=m;}
-    for(i=0;i<ct;i++){m=l[i];p[i]=a[m]*gauss(y+D*m,X+D*n,D,rad)*(db?exp(-0.5*D*SQ(sgm[m]*s/r)):1.0);val+=p[i];}
+    for(i=0;i<ct;i++){m=l[i];p[i]=a[m]*gauss(y+D*m,X+D*n,D,r)*(db?exp(-0.5*D*SQ(sgm[m]*s/r)):1.0);val+=p[i];}
     for(i=0;i<ct;i++){m=l[i];p[i]/=val;}
     max=c/val;mmax=0;for(i=0;i<ct;i++)if(p[i]>max){max=p[i];mmax=l[i]+1;}
     /* print P, c, e */
@@ -98,7 +100,7 @@ void save_corresp(
   return;
 }
 
-int save_optpath(const char *file, const double *sy, const double *X, pwsz sz, int lp){
+int save_optpath(const char *file, const double *sy, const double *X, pwsz sz, pwpm pm, int lp){
   int N=sz.N,M=sz.M,D=sz.D; int si=sizeof(int),sd=sizeof(double);
   FILE *fp=fopen(file,"wb");
   if(!fp){printf("Can't open: %s\n",file);exit(EXIT_FAILURE);}
@@ -108,17 +110,25 @@ int save_optpath(const char *file, const double *sy, const double *X, pwsz sz, i
   fwrite(&lp,si,   1,  fp);
   fwrite(sy, sd,lp*D*M,fp);
   fwrite(X,  sd,   D*N,fp);
+  if(strlen(pm.fn[FACE_Y])){double **b; int nl,nc,l,c; char mode; int *L=NULL;
+    b=read2d(&nl,&nc,&mode,pm.fn[FACE_Y],"NA"); assert(nc==3||nc==2);
+    L=calloc(nc*nl,si); for(l=0;l<nl;l++)for(c=0;c<nc;c++){L[c+nc*l]=(int)b[l][c];}
+    fwrite(&nl,si,  1,  fp);
+    fwrite(&nc,si,  1,  fp);
+    fwrite(L,  si,nc*nl,fp);
+    free(L); free(b);
+  }
   fclose(fp);
+
   return 0;
 }
 
-void scan_beta(double *bet, const char *arg){
-  int i=0,ct=0;
-  while(arg[i++]!='\0')if(arg[i]==','){ct++;} assert(ct<=1);
-  switch(ct){
-    case 0: sscanf(arg,"%lf",    bet);        break;
-    case 1: sscanf(arg,"%lf,%lf",bet,bet+1);  break;
-  }
+void scan_kernel(pwpm *pm, const char *arg){ char *p;
+  if('g'!=tolower(*arg)) {pm->G=atoi(arg);return;}
+  p=strchr(arg,','); if(!p){printf("ERROR: -G: Arguments are wrongly specified. Abort.\n");exit(EXIT_FAILURE);}
+  if(strstr(arg,"txt")) sscanf(p+1,"%lf,%s",    &(pm->tau),pm->fn[FACE_Y]);
+  else                  sscanf(p+1,"%lf,%d,%lf",&(pm->tau),&(pm->nnk),&(pm->nnr));
+  if(pm->tau<0||pm->tau>1){printf("ERROR: the 2nd argument of -G (tau) must be in range [0,1]. Abort.\n"); exit(EXIT_FAILURE);}
 }
 
 void scan_dwpm(int *dwn, double *dwr, const char *arg){
@@ -160,25 +170,29 @@ void check_prms(const pwpm pm, const pwsz sz){
   if(pm.K>M)   {printf("ERROR: -K: Argument must be less than M. Abort.\n");        exit(EXIT_FAILURE);}
   if(pm.J<0)   {printf("ERROR: -J: Argument must be a positive integer. Abort.\n"); exit(EXIT_FAILURE);}
   if(pm.J>M+N) {printf("ERROR: -J: Argument must be less than M+N. Abort.\n");      exit(EXIT_FAILURE);}
-  if(pm.L<0)   {printf("ERROR: -L: Argument must be a positive integer. Abort.\n"); exit(EXIT_FAILURE);}
-  if(pm.L>M)   {printf("ERROR: -L: Argument must be less than M. Abort.\n");        exit(EXIT_FAILURE);}
-  if(pm.G>5)   {printf("ERROR: -G: Argument must be one of {0,1,2,3,4}. Abort.\n"); exit(EXIT_FAILURE);}
-  if(pm.G<0)   {printf("ERROR: -G: Argument must be one of {0,1,2,3,4}. Abort.\n"); exit(EXIT_FAILURE);}
-  if(pm.bet[0]<=0){printf("ERROR: -b: Argument must be positive. Abort.\n");        exit(EXIT_FAILURE);}
-  if(pm.bet[1]<=0){printf("ERROR: -b: Argument must be positive. Abort.\n");        exit(EXIT_FAILURE);}
+  if(pm.G>3)   {printf("ERROR: -G: Arguments are wrongly specified. Abort.\n");     exit(EXIT_FAILURE);}
+  if(pm.G<0)   {printf("ERROR: -G: Arguments are wrongly specified. Abort.\n");     exit(EXIT_FAILURE);}
+  if(pm.bet<=0){printf("ERROR: -b: Argument must be positive. Abort.\n");           exit(EXIT_FAILURE);}
+  if(pm.eps< 0){printf("ERROR: -z: Argument must be in range [0,1]. Abort.\n");     exit(EXIT_FAILURE);}
+  if(pm.eps> 1){printf("ERROR: -z: Argument must be in range [0,1]. Abort.\n");     exit(EXIT_FAILURE);}
   if(!strchr("exyn",pm.nrm)){printf("\n  ERROR: -u: Argument must be one of 'e', 'x', 'y' and 'n'. Abort.\n\n");exit(EXIT_FAILURE);}
 }
 
 void pw_getopt(pwpm *pm, int argc, char **argv){ int opt;
-  strcpy(pm->fn[TARGET],"X.txt");   pm->omg=0.0; pm->cnv=1e-4; pm->K=0; pm->opt=0.0; pm->btn=0.20; pm->bet[0]=2.0; pm->L=0;
-  strcpy(pm->fn[SOURCE],"Y.txt");   pm->lmd=2.0; pm->nlp= 500; pm->J=0; pm->dlt=7.0; pm->lim=0.15; pm->bet[1]=2.0;
+  strcpy(pm->fn[TARGET],"X.txt");   pm->omg=0.0; pm->cnv=1e-4; pm->K=0; pm->opt=0.0; pm->btn=0.20; pm->bet=2.0;
+  strcpy(pm->fn[SOURCE],"Y.txt");   pm->lmd=2.0; pm->nlp= 500; pm->J=0; pm->dlt=7.0; pm->lim=0.15; pm->eps=1e-3;
   strcpy(pm->fn[OUTPUT],"output_"); pm->rns=0;   pm->llp=  30; pm->G=0; pm->gma=1.0; pm->kpa=ZERO; pm->nrm='e';
+  strcpy(pm->fn[FACE_Y],"");        pm->nnk=0;   pm->nnr=   0;
+  strcpy(pm->fn[FUNC_Y],"");
+  strcpy(pm->fn[FUNC_X],"");
   pm->dwn[SOURCE]=0; pm->dwr[SOURCE]=0.0f;
   pm->dwn[TARGET]=0; pm->dwr[TARGET]=0.0f;
-  while((opt=getopt(argc,argv,"D:u:r:w:l:b:k:g:d:e:c:n:N:G:J:K:L:o:x:y:f:s:hpqvaAtW1"))!=-1){
+  while((opt=getopt(argc,argv,"X:Y:D:z:u:r:w:l:b:k:g:d:e:c:n:N:G:J:K:o:x:y:f:s:hpqvaAtWS1"))!=-1){
     switch(opt){
-      case 'D': scan_dwpm(pm->dwn,pm->dwr,optarg);    break;
-      case 'b': scan_beta(pm->bet,optarg);            break;
+      case 'D': scan_dwpm( pm->dwn, pm->dwr,optarg);  break;
+      case 'G': scan_kernel(pm, optarg);              break;
+      case 'z': pm->eps  = atof(optarg);              break;
+      case 'b': pm->bet  = atof(optarg);              break;
       case 'w': pm->omg  = atof(optarg);              break;
       case 'l': pm->lmd  = atof(optarg);              break;
       case 'k': pm->kpa  = atof(optarg);              break;
@@ -191,8 +205,6 @@ void pw_getopt(pwpm *pm, int argc, char **argv){ int opt;
       case 'N': pm->llp  = atoi(optarg);              break;
       case 'K': pm->K    = atoi(optarg);              break;
       case 'J': pm->J    = atoi(optarg);              break;
-      case 'L': pm->L    = atoi(optarg);              break;
-      case 'G': pm->G    = atoi(optarg);              break;
       case 'r': pm->rns  = atoi(optarg);              break;
       case 'u': pm->nrm  = *optarg;                   break;
       case 'h': pm->opt |= PW_OPT_HISTO;              break;
@@ -201,10 +213,13 @@ void pw_getopt(pwpm *pm, int argc, char **argv){ int opt;
       case 'q': pm->opt |= PW_OPT_QUIET;              break;
       case 'A': pm->opt |= PW_OPT_ACCEL;              break;
       case 'W': pm->opt |= PW_OPT_NWARN;              break;
+      case 'S': pm->opt |= PW_OPT_NOSIM;              break;
       case '1': pm->opt |= PW_OPT_1NN;                break;
       case 'o': strcpy(pm->fn[OUTPUT],optarg);        break;
       case 'x': strcpy(pm->fn[TARGET],optarg);        break;
       case 'y': strcpy(pm->fn[SOURCE],optarg);        break;
+      case 'X': strcpy(pm->fn[FUNC_X],optarg);        break;
+      case 'Y': strcpy(pm->fn[FUNC_Y],optarg);        break;
       case 'v': printUsage(); exit(EXIT_SUCCESS);     break;
       case 's':
         if(strchr(optarg,'A')) pm->opt |= PW_OPT_SAVE;
@@ -245,10 +260,12 @@ void memsize(int *dsz, int *isz, pwsz sz, pwpm pm){
   int M=sz.M,N=sz.N,J=sz.J,K=sz.K,D=sz.D; int T=pm.opt&PW_OPT_LOCAL; int L=M>N?M:N,mtd=MAXTREEDEPTH;
   *isz =D;              *dsz =4*M+2*N+D*(5*M+N+13*D+3);  /* common          */
   *isz+=K?M:0;          *dsz+=K?K*(2*M+3*K+D+12):(3*M*M);/* low-rank        */
-  *isz+=J?(M+N):0;      *dsz+=J?(D*(M+N)+J+J*J):0;       /* nystrom         */
+  *isz+=J?(M+N):0;      *dsz+=J?(D*(M+N+J)+J+J*J):0;     /* nystrom         */
+                        *dsz+=J*(1+D+1);                 /* nystrom (Df=1)  */
   *isz+=T?L*6:0;        *dsz+=T?L*2:0;                   /* kdtree (build)  */
   *isz+=T?L*(2+mtd):0;                                   /* kdtree (search) */
   *isz+=T?2*(3*L+1):0;                                   /* kdtree (tree)   */
+                        *dsz+=M;                         /* function reg    */
 }
 
 void print_bbox(const double *X, int D, int N){
@@ -282,34 +299,38 @@ double tvcalc(const struct timeval *end, const struct timeval *beg){
   return (end->tv_sec-beg->tv_sec)+(end->tv_usec-beg->tv_usec)/1e6;
 }
 
-void fprint_comptime(FILE *fp, const struct timeval *tv, double *tt, int nx, int ny){
+void fprint_comptime(FILE *fp, const struct timeval *tv, double *tt, int nx, int ny, int geok){
   if(fp==stderr) fprintf(fp,"  Computing Time:\n");
   #ifdef MINGW32
-  fprintf(fp,"    VB Optimization: %.2lf sec\n",            tvcalc(tv+3,tv+2));
-  if(nx||ny) fprintf(fp,"    Downsampling:    %.3lf sec\n", tvcalc(tv+2,tv+1));
-  if(ny)     fprintf(fp,"    Interpolation:   %.3lf sec\n", tvcalc(tv+4,tv+3));
+  if(geok)   fprintf(fp,"    FPSA algorithm:  %.3lf s\n", tvcalc(tv+2,tv+1));
+  if(nx||ny) fprintf(fp,"    Downsampling:    %.3lf s\n", tvcalc(tv+3,tv+2));
+  fprintf(fp,"    VB Optimization: %.3lf s\n",            tvcalc(tv+4,tv+3));
+  if(ny)     fprintf(fp,"    Interpolation:   %.3lf s\n", tvcalc(tv+5,tv+4));
   #else
-  fprintf(fp,"    VB Optimization: %.2lf sec (real) / %.2lf sec (cpu)\n",           tvcalc(tv+3,tv+2),(tt[3]-tt[2])/CLOCKS_PER_SEC);
-  if(nx||ny) fprintf(fp,"    Downsampling:    %.3lf sec (real) / %.3lf sec (cpu)\n",tvcalc(tv+2,tv+1),(tt[2]-tt[1])/CLOCKS_PER_SEC);
-  if(ny)     fprintf(fp,"    Interpolation:   %.3lf sec (real) / %.3lf sec (cpu)\n",tvcalc(tv+4,tv+3),(tt[4]-tt[3])/CLOCKS_PER_SEC);
+  if(geok)   fprintf(fp,"    FPSA algorithm:  %.3lf s (real) / %.3lf s (cpu)\n",tvcalc(tv+2,tv+1),(tt[2]-tt[1])/CLOCKS_PER_SEC);
+  if(nx||ny) fprintf(fp,"    Downsampling:    %.3lf s (real) / %.3lf s (cpu)\n",tvcalc(tv+3,tv+2),(tt[3]-tt[2])/CLOCKS_PER_SEC);
+  fprintf(fp,"    VB Optimization: %.3f s (real) / %.3lf s (cpu)\n",            tvcalc(tv+4,tv+3),(tt[4]-tt[3])/CLOCKS_PER_SEC);
+  if(ny)     fprintf(fp,"    Interpolation:   %.3lf s (real) / %.3lf s (cpu)\n",tvcalc(tv+5,tv+4),(tt[5]-tt[4])/CLOCKS_PER_SEC);
   #endif
-  fprintf(fp,"    File reading:    %.3lf sec\n",tvcalc(tv+1,tv+0));
-  fprintf(fp,"    File writing:    %.3lf sec\n",tvcalc(tv+5,tv+4));
+  fprintf(fp,"    File reading:    %.3lf s\n",tvcalc(tv+1,tv+0));
+  fprintf(fp,"    File writing:    %.3lf s\n",tvcalc(tv+6,tv+5));
   if(fp==stderr) fprintf(fp,"\n");
 }
 
-void fprint_comptime2(FILE *fp, const struct timeval *tv, double *tt){
-  fprintf(fp,"%lf\t%lf\n",tvcalc(tv+3,tv+2),(tt[3]-tt[2])/CLOCKS_PER_SEC);
+void fprint_comptime2(FILE *fp, const struct timeval *tv, double *tt, int geok){
   fprintf(fp,"%lf\t%lf\n",tvcalc(tv+2,tv+1),(tt[2]-tt[1])/CLOCKS_PER_SEC);
+  fprintf(fp,"%lf\t%lf\n",tvcalc(tv+3,tv+2),(tt[3]-tt[2])/CLOCKS_PER_SEC);
   fprintf(fp,"%lf\t%lf\n",tvcalc(tv+4,tv+3),(tt[4]-tt[3])/CLOCKS_PER_SEC);
-  fprintf(fp,"%lf\t%lf\n",tvcalc(tv+1,tv+0),tvcalc(tv+5,tv+4));
+  fprintf(fp,"%lf\t%lf\n",tvcalc(tv+5,tv+4),(tt[5]-tt[4])/CLOCKS_PER_SEC);
+  fprintf(fp,"%lf\t%lf\n",tvcalc(tv+1,tv+0),tvcalc(tv+6,tv+5));
 }
 
 int main(int argc, char **argv){
-  int d,l,m,n,D,M,N,lp; char mode; double s,r,Np,sgmX,sgmY,*muX,*muY; double *u,*v,*w,*R,*t,*a,*sgm;
+  int d,k,l,m,n,D,M,N,lp; char mode; double s,r,Np,sgmX,sgmY,*muX,*muY; double *u,*v,*w,*R,*t,*a,*sgm;
   pwpm pm; pwsz sz; double *x,*y,*X,*Y,*wd,**bX,**bY; int *wi; int sd=sizeof(double),si=sizeof(int); FILE *fp; char fn[256];
-  int dsz,isz,ysz,xsz; char *ytraj=".optpath.bin",*xtraj=".optpathX.bin"; double tt[6]; struct timeval tv[6];
+  int dsz,isz,ysz,xsz; char *ytraj=".optpath.bin",*xtraj=".optpathX.bin"; double tt[7]; struct timeval tv[7];
   int nx,ny,N0,M0=0; double rx,ry,*T,*X0,*Y0=NULL; double sgmT,*muT; double *pf;
+  double *LQ=NULL,*LQ0=NULL; int *Ux,*Uy; int K; int geok=0; double *x0;
 
   gettimeofday(tv+0,NULL); tt[0]=clock();
   /* read files */
@@ -322,10 +343,8 @@ int main(int argc, char **argv){
   if(D  != sz.D){printf("ERROR: Dimensions of X and Y are incosistent. dim(X)=%d, dim(Y)=%d\n",sz.D,D);exit(EXIT_FAILURE);}
   if(N<=D||M<=D){printf("ERROR: #points must be greater than dimension\n");exit(EXIT_FAILURE);}
   /* change memory layout */
-  for(d=0;d<D;d++)for(n=0;n<N;n++){X[d+D*n]=bX[n][d];}
-  for(d=0;d<D;d++)for(m=0;m<M;m++){Y[d+D*m]=bY[m][d];}
-  free2d(bX,N,D);
-  free2d(bY,M,D);
+  for(d=0;d<D;d++)for(n=0;n<N;n++){X[d+D*n]=bX[n][d];} free2d(bX,N);
+  for(d=0;d<D;d++)for(m=0;m<M;m++){Y[d+D*m]=bY[m][d];} free2d(bY,M);
   /* alias: size */
   sz.M=M; sz.J=pm.J;
   sz.N=N; sz.K=pm.K;
@@ -338,15 +357,33 @@ int main(int argc, char **argv){
   if(!(pm.opt&PW_OPT_QUIET)&&(D==2||D==3)) print_norm(X,Y,D,N,M,1,pm.nrm);
   normalize_batch(X,muX,&sgmX,Y,muY,&sgmY,N,M,D,pm.nrm);
   if(!(pm.opt&PW_OPT_QUIET)&&(D==2||D==3)) print_norm(X,Y,D,N,M,0,pm.nrm);
-  /* down-sampling */
+
+  /* geodesic kernel computation */
   gettimeofday(tv+1,NULL); tt[1]=clock();
+  geok=(pm.nnk||strlen(pm.fn[FACE_Y]))&&pm.tau>1e-5;
+  if(geok&&!(pm.opt&PW_OPT_QUIET)) fprintf(stderr,"  Executing the FPSA algorithm ... ");
+  if(geok){ sgraph* sg;
+    if(pm.nnk) sg=sgraph_from_points(Y,D,M,pm.nnk,pm.nnr);
+    else       sg=sgraph_from_mesh  (Y,D,M,pm.fn[FACE_Y]);
+    LQ=geokdecomp(&K,Y,D,M,(const int**)sg->E,(const double**)sg->W,pm.K,pm.bet,pm.tau,pm.eps);
+    sz.K=pm.K=K; /* update K */
+    sgraph_free(sg);
+    if(geok&&!(pm.opt&PW_OPT_QUIET)) fprintf(stderr,"done. (K->%d)\n\n",K);
+  }
+
+  /* downsampling */
+  gettimeofday(tv+2,NULL); tt[2]=clock();
   nx=pm.dwn[TARGET]; rx=pm.dwr[TARGET];
   ny=pm.dwn[SOURCE]; ry=pm.dwr[SOURCE];
   if((nx||ny)&&!(pm.opt&PW_OPT_QUIET)) fprintf(stderr,"  Downsampling ...");
-  if(nx){X0=X;N0=N;N=sz.N=nx;X=calloc(D*N,sd);downsample(X,N,X0,D,N0,rx);}
-  if(ny){Y0=Y;M0=M;M=sz.M=ny;Y=calloc(D*M,sd);downsample(Y,M,Y0,D,M0,ry);}
+  if(nx){X0=X;N0=N;N=sz.N=nx;X=calloc(D*N,sd);Ux=calloc(D*N,sd);downsample(X,Ux,N,X0,D,N0,rx);}
+  if(ny){Y0=Y;M0=M;M=sz.M=ny;Y=calloc(D*M,sd);Uy=calloc(D*M,sd);downsample(Y,Uy,M,Y0,D,M0,ry);}
   if((nx||ny)&&!(pm.opt&PW_OPT_QUIET)) fprintf(stderr," done. \n\n");
-  gettimeofday(tv+2,NULL); tt[2]=clock();
+  if(ny&&geok){ LQ0=LQ;LQ=calloc(K+K*M,sd);
+    for(k=0;k<K;k++) LQ[k]=LQ0[k];
+    for(k=0;k<K;k++)for(m=0;m<M;m++) LQ[m+M*k+K]=LQ0[Uy[m]+M0*k+K];
+  }
+  gettimeofday(tv+3,NULL); tt[3]=clock();
   /* memory size */
   memsize(&dsz,&isz,sz,pm);
   /* memory size: x, y */
@@ -356,14 +393,15 @@ int main(int argc, char **argv){
   wd=calloc(dsz,sd); x=calloc(xsz,sd); a=calloc(M,sd); u=calloc(D*M,sd); R=calloc(D*D,sd); sgm=calloc(M,sd);
   wi=calloc(isz,si); y=calloc(ysz,sd); w=calloc(M,sd); v=calloc(D*M,sd); t=calloc(D,  sd); pf =calloc(3*pm.nlp,sd);
   /* main computation */
-  lp=bcpd(x,y,u,v,w,a,sgm,&s,R,t,&r,&Np,pf,wd,wi,X,Y,sz,pm);
+  lp=bcpd(x,y,u,v,w,a,sgm,&s,R,t,&r,&Np,pf,wd,wi,X,Y,LQ,sz,pm);
   /* interpolation */
-  gettimeofday(tv+3,NULL); tt[3]=clock();
+  gettimeofday(tv+4,NULL); tt[4]=clock();
   if(ny){
     if(!(pm.opt&PW_OPT_QUIET)) fprintf(stderr,"%s  Interpolating ... ",(pm.opt&PW_OPT_HISTO)?"\n":"");
     T=calloc(D*M0,sd);
-    if(pm.opt&PW_OPT_1NN) interpolate_1nn(T,Y0,M0,v,Y,  &s,R,t,   sz,pm);
-    else                  interpolate    (T,Y0,M0,x,Y,w,&s,R,t,&r,sz,pm);
+    if(pm.opt&PW_OPT_1NN) interpolate_1nn (T,Y0,M0,v,Y,  &s,R,t,          sz,pm);
+    else if (LQ0)         interpolate_geok(T,Y0,M0,x,Y,w,&s,R,t,&r,LQ0,Uy,sz,pm);
+    else                  interpolate     (T,Y0,M0,x,Y,w,&s,R,t,&r,       sz,pm);
     switch(pm.nrm){
       case 'e': sgmT=sgmX;muT=muX;  break;
       case 'x': sgmT=sgmX;muT=muX;  break;
@@ -371,17 +409,26 @@ int main(int argc, char **argv){
       case 'n': sgmT=1.0f;muT=NULL; break;
       default:  sgmT=sgmX;muT=muX;
     }
-    denormlize(T,muT,sgmT,M0,D);
-    save_variable(pm.fn[OUTPUT],"y.interpolated.txt",T,D,M0,"%lf",TRANSPOSE); free(T);
+    denormlize(T, muT,sgmT,M0,D);
     if(!(pm.opt&PW_OPT_QUIET)) fprintf(stderr,"done. \n\n");
+    if(pm.opt&PW_OPT_INTPX){
+      x0=calloc(D*M0,sd);
+      N0=nx?N0:N;interpolate_x(x0,T,X0,D,M0,N0,r,pm);
+      denormlize(x0,muT,sgmT,M0,D);
+    }
   }
-  gettimeofday(tv+4,NULL); tt[4]=clock();
+  gettimeofday(tv+5,NULL); tt[5]=clock();
+  /* save interpolated variables */
+  if(ny){
+    save_variable(pm.fn[OUTPUT],"y.interpolated.txt",T, D,M0,"%lf",TRANSPOSE); if(!(pm.opt&PW_OPT_INTPX)) goto skip;
+    save_variable(pm.fn[OUTPUT],"x.interpolated.txt",x0,D,M0,"%lf",TRANSPOSE); free(x0); skip: free(T);
+  }
   /* save correspondence */
   if((pm.opt&PW_OPT_SAVEP)|(pm.opt&PW_OPT_SAVEC)|(pm.opt&PW_OPT_SAVEE))
     save_corresp(pm.fn[OUTPUT],X,y,a,sgm,s,r,sz,pm);
   /* save trajectory */
-  if(pm.opt&PW_OPT_PATHX) save_optpath(xtraj,x+D*M,X,sz,lp);
-  if(pm.opt&PW_OPT_PATHY) save_optpath(ytraj,y+D*M,X,sz,lp);
+  if(pm.opt&PW_OPT_PATHX) save_optpath(xtraj,x+D*M,X,sz,pm,lp);
+  if(pm.opt&PW_OPT_PATHY) save_optpath(ytraj,y+D*M,X,sz,pm,lp);
   /* revert normalization */
   denormalize_batch(x,muX,sgmX,y,muY,sgmY,M,M,D,pm.nrm);
   /* save variables */
@@ -403,12 +450,12 @@ int main(int argc, char **argv){
     for(m=0;m<M;m++) sgm[m]=sqrt(sgm[m]);
     save_variable(pm.fn[OUTPUT],"Sigma.txt",sgm,M,1,"%e",ASIS);
   }
-  gettimeofday(tv+5,NULL); tt[5]=clock();
+  gettimeofday(tv+6,NULL); tt[6]=clock();
   /* output: computing time */
-  if(!(pm.opt&PW_OPT_QUIET)) fprint_comptime(stderr,tv,tt,nx,ny);
+  if(!(pm.opt&PW_OPT_QUIET)) fprint_comptime(stderr,tv,tt,nx,ny,geok);
   /* save total computing time */
   strcpy(fn,pm.fn[OUTPUT]); strcat(fn,"comptime.txt");
-  fp=fopen(fn,"w"); if(pm.opt&PW_OPT_VTIME) fprint_comptime2(fp,tv,tt); else fprint_comptime(fp,tv,tt,nx,ny); fclose(fp);
+  fp=fopen(fn,"w"); if(pm.opt&PW_OPT_VTIME) fprint_comptime2(fp,tv,tt,geok); else fprint_comptime(fp,tv,tt,nx,ny,geok); fclose(fp);
   /* save computing time for each loop */
   if(pm.opt&PW_OPT_PFLOG){
     strcpy(fn,pm.fn[OUTPUT]); strcat(fn,"profile_time.txt"); fp=fopen(fn,"w");
@@ -421,7 +468,7 @@ int main(int argc, char **argv){
     strcpy(fn,pm.fn[OUTPUT]); strcat(fn,"profile_sigma.txt"); fp=fopen(fn,"w");
     for(l=0;l<lp;l++){fprintf(fp,"%f\n",pf[l+2*pm.nlp]);}
   }
-  /* output info` */
+  /* output info */
   if(pm.opt&PW_OPT_INFO){
     strcpy(fn,pm.fn[OUTPUT]); strcat(fn,"info.txt");
     fp=fopen(fn,"w");

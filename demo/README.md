@@ -1,15 +1,15 @@
 # Demo
 
-## Point set registration
+## Surface Registration and Point set registration
 MATLAB scripts under this directory will demonstrate
 various examples.
 
-- Nonrigid/BCPD examples:
-  - Fish, Monkey, Bunny, Face, Armadillo, Dragon.
-- Nonrigid/BCPD++ examples:
-  - Armadillo, Dragon, Asian Dragon, Lucy.
-- Rigid/BCPD examples:
-  - Chef, Parasaurolophus, T-rex, Apartment, Stairs.
+- Nonrigid/Hierarchical Registration
+- Nonrigid/Geodesic-Based BCPD
+- Nonrigid/Geodesic-Based BCPD++
+- Nonrigid/BCPD
+- Nonrigid/BCPD++
+- Rigid/BCPD
 
 ## Shape transfer
 Bash scripts in `shapeTransfer` will demonstrate

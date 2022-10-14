@@ -74,3 +74,7 @@ void denormalize_batch(double *X, const double *muX, double scX, double *Y, cons
   if(type=='y'){norm_l(X,muY,scY,N,D,rev);norm_l(Y,muY,scY,M,D,rev);}
 }
 
+void normalize(double *X, double *mu, double *sc, int N, int D){
+  mean(mu,X,N,D);*sc=scale(X,mu,N,D);norm_l(X,mu,*sc,N,D,0);
+}
+

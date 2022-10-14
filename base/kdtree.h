@@ -29,6 +29,8 @@ void kdtree(
        int            N   /* I |      | #points                              */
 );
 
+int *kdtree_build (const double *X, int D, int N);
+
 void eballsearch_next(
        int           *m,  /*  O  |   1   | next index within radius e */
        int           *S,  /*  W  | 2logN | stack                      */
@@ -49,4 +51,16 @@ void nnsearch(
        const int     *T,  /*  I  | 3xN+1 | kdtree                    */
        int            D,  /*  I  | const.| dimension                 */
        int            N   /*  I  | const.| #points                   */
+);
+
+void knnsearch(
+       int           *Q,  /*  O  |  1+K  | k nearest neighbors (+size) */
+       int            K,  /* I/O | const.| #neighbors                  */
+       double         e,  /* I/O | const.| maximum distance            */
+       const double  *y,  /*  I  | const.| the point of interest       */
+       int            me, /*  I  | const.| y's index if y in X else <0 */
+       const double  *X,  /*  I  |  DxN  | points                      */
+       const int     *T,  /*  I  | 3xN+1 | kdtree                      */
+       int            D,  /*  I  | const.| dimension                   */
+       int            N   /*  I  | const.| #points                     */
 );

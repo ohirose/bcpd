@@ -15,14 +15,13 @@ K   ='70';
 J   ='300';
 c   ='1e-6';
 n   ='500';
-L   ='100';
 nrm ='e';
 dwn ='B,50000,0.08';
 %% execution
 prm1=sprintf('-w%s -b%s -l%s -g%s',omg,bet,lmd,gma);
-prm2=sprintf('-J%s -K%s -p -L%s -u%s -D%s',J,K,L,nrm,dwn);
+prm2=sprintf('-J%s -K%s -p -u%s -D%s',J,K,nrm,dwn);
 prm3=sprintf('-c%s -n%s -h -r1',c,n);
-cmd =sprintf('%s -x%s -y%s %s %s %s -sY',bcpd,x,y,prm1,prm2,prm3);
+cmd =sprintf('%s -x%s -y%s %s %s %s',bcpd,x,y,prm1,prm2,prm3);
 system(cmd);
 
 X0=load(x);

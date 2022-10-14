@@ -36,19 +36,18 @@ static void resampling(int *nums, const double *probs, int N, int M){
   }
 }
 
-static void downsample_a(double *x, int L, double *X, int D, int N){
-  int *U; int d,l; if(L>N){goto err01;}
+static void downsample_a(double *x, int *U, int L, double *X, int D, int N){
+  int d,l; if(L>N){goto err01;}
 
-  U=calloc(N,sizeof(int));
   randperm(U,N); for(d=0;d<D;d++)for(l=0;l<L;l++){x[d+D*l]=X[d+D*U[l]];}
-  free(U); return;
+  return;
 
   err01:
   printf("\n\n  ERROR: L<=N must be satisfied in the function 'downsample_a'. Abort.\n\n");
   exit(EXIT_FAILURE);
 }
 
-static void downsample_b(double *x, int L, double *X, int D, int N, double e){
+static void downsample_b(double *x, int *U, int L, double *X, int D, int N, double e){
   int *S,*T,*a,*c; double *w,*v; int sd=sizeof(double),si=sizeof(int);
   int d,j,n,q,l=0,mtd=MAXTREEDEPTH; double val=0;
   /* allocation */
@@ -69,14 +68,14 @@ static void downsample_b(double *x, int L, double *X, int D, int N, double e){
   /* resampling */
   resampling(c,w,N,L);
   /* output */
-  for(n=0;n<N;n++)for(j=0;j<c[n];j++){for(d=0;d<D;d++){x[d+D*l]=X[d+D*n];} l++;}
+  for(n=0;n<N;n++)for(j=0;j<c[n];j++){U[l]=n;for(d=0;d<D;d++){x[d+D*l]=X[d+D*n];} l++;}
 
   free(T);free(a);free(v);
   free(S);free(w);free(c);
 }
 
 /* voxel grid filter */
-static void downsample_c(double *x, int L, double *X, int D, int N, double e){
+static void downsample_c(double *x, int *U, int L, double *X, int D, int N, double e){
   int d,j,l=0,n,num; size_t K; int *v,*c,*np,*cum,*div; double *w,*max,*min; int sd=sizeof(double),si=sizeof(int);
   double val=0;
   /* allocation */
@@ -98,15 +97,15 @@ static void downsample_c(double *x, int L, double *X, int D, int N, double e){
   /* resampling */
   resampling(c,w,N,L);
   /* output */
-  for(n=0;n<N;n++)for(j=0;j<c[n];j++){for(d=0;d<D;d++){x[d+D*l]=X[d+D*n];} l++;}
+  for(n=0;n<N;n++)for(j=0;j<c[n];j++){U[l]=n;for(d=0;d<D;d++){x[d+D*l]=X[d+D*n];} l++;}
 
   free(v);free(max);free(div);free(w);
   free(c);free(min);free(cum);free(np);
 }
 
-void downsample(double *x, int L, double *X, int D, int N, double e){
-  if     (e<0) downsample_c(x,L,X,D,N,-e);
-  else if(e>0) downsample_b(x,L,X,D,N, e);
-  else         downsample_a(x,L,X,D,N);
+void downsample(double *x, int *U, int L, double *X, int D, int N, double e){
+  if     (e<0) downsample_c(x,U,L,X,D,N,-e);
+  else if(e>0) downsample_b(x,U,L,X,D,N, e);
+  else         downsample_a(x,U,L,X,D,N);
 }
 

@@ -1,21 +1,23 @@
 
-# Bayesian Coherent Point Drift (BCPD/BCPD++)
+# Bayesian Coherent Point Drift (+ Geodesic Kernel)
 
-This software implements a non-rigid point matching algorithm, Bayesian coherent point drift (BCPD).
-The algorithm generalizes coherent point drift (CPD) in that it combines rigid CPD and non-rigid CPD
-as a single algorithm. Additionally, the acceleration method called BCPD++ efficiently reduces computing time.
-The software enjoys the following characteristics:
+This software is an implementation of non-rigid registration algorithms, Bayesian coherent point drift (BCPD)
+and its faster variant called BCPD++. It also includes geodesic-based BCPD (GBCPD) and its accelerated variant (GBCPD++),
+which define the shape deformation prior using geodesic distance. The software has the following characteristics:
 
-- **Scalability**. It non-rigidly registers point sets containing over 10 million points.
+- **Scalability**. It non-rigidly registers the shapes containing over 10M points (3M points if geodesic kernel).
 - **Robustness**. It performs non-rigid registration with robustness against outliers and target rotation.
 - **Multipurpose**. It performs rigid registration under appropriate parameters to find the partial overlap between 3D scans.
 
-For more information, see [Hirose2020a](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307) (BCPD)
-and [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) (BCPD++).
+For more information, see
+[Hirose2022](https://ieeexplore.ieee.org/document/9918058) (GBCPD/GBCPD++),
+[Hirose2020a](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307) (BCPD), and
+[Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) (BCPD++).
 Also, several examples can be watched in
-[[Video 1]](https://youtu.be/pbLVMDj1Zro),
-[[Video 2]](https://youtu.be/cET6gKAvjw0),
-[[Video 3]](https://youtu.be/SoUTbH2tJj8).
+[[Video 1]](https://youtu.be/OT97b60iBmQ),
+[[Video 2]](https://youtu.be/pbLVMDj1Zro),
+[[Video 3]](https://youtu.be/cET6gKAvjw0),
+[[Video 4]](https://youtu.be/SoUTbH2tJj8).
 
 ![alt text](https://github.com/ohirose/bcpd/blob/master/img/transfer.jpg?raw=true)
 
@@ -23,9 +25,11 @@ Also, several examples can be watched in
 
 1. [Papers](#papers)
 2. [Performance](#performance)
+    + [GBCPD vs CPD](#gbcpd-vs-cpd)
     + [BCPD vs CPD](#bcpd-vs-cpd)
     + [BCPD vs BCPD++](#bcpd-vs-bcpd)
 3. [Demo](#demo)
+    + [Surface registration](#surface-registration)
     + [Point set registration](#point-set-registration)
     + [Shape transfer](#shape-transfer)
 4. [Compilation](#compilation)
@@ -51,6 +55,9 @@ Also, several examples can be watched in
 ## Papers
 
 The details of the algorithms are available in the following papers:
+- [GBCPD/GBCPD++] O. Hirose,
+  "[Geodesic-Based Bayesian Coherent Point Drift](https://ieeexplore.ieee.org/document/9918058),"
+  [IEEE TPAMI](https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=34), Oct 2022.
 - [BCPD++] O. Hirose,
   "[Acceleration of non-rigid point set registration with downsampling and Gaussian process regression](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402),"
   [IEEE TPAMI](https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=34), Dec 2020.
@@ -66,6 +73,10 @@ The details of the algorithms are available in the following papers:
 
 ## Performance
 
+### GBCPD vs CPD
+GBCPD works better than CPD and BCPD if it registers the shapes whose different parts neighboring each other:
+![alt text](https://github.com/ohirose/bcpd/blob/master/img/gbcpd-cmp.png?raw=true)
+
 ### BCPD vs CPD
 BCPD is faster than coherent point drift (CPD) and is often more accurate. The following figure shows a comparison
 using Armadillo data included in demo data (vs Dr. Myronenko's implementation on Macbook Pro Early 2013):
@@ -78,6 +89,16 @@ BCPD++ is much faster than BCPD but is slightly less accurate (Mac Mini 2018).
 <img src="https://github.com/ohirose/bcpd/blob/master/img/vs-plusplus.png" alt="vs-plusplus" width="400"/>
 
 ## Demo
+
+### Surface Registration
+
+- Download the datasets required for demos:
+  [GBCPD data](https://www.dropbox.com/s/yssce2kmdil3fqs/gbcpd-demodata20220829.zip?dl=1).
+- Decompress and move the datasets into the `data` folder in this software.
+- Start MATLAB.
+- Go to one of `demo/[gbcpd/gbcpd++/hierarchy]` folders in the MATLAB environment.
+- Double-click a demo script, e.g., `demoFACE01.m`.
+- Press the run button in the code editor of MATLAB.
 
 ### Point set registration
 MATLAB scripts under the `demo` folder will demonstrate various examples.
@@ -115,10 +136,10 @@ Therefore, it might be quite slower than the one compiled in a Mac/Linux system.
 2. Download and decompress the zip file that includes source codes.
 3. Move into the top directory of the uncompressed folder using the terminal window.
 4. Type `make OPT=-DUSE_OPENMP ENV=<your-environment>`; replace `<your-environment>` with `LINUX`,
-   `HOMEBREW`, or `MACPORTS`. Type `make OPT=-DNUSE_OPENMP` when disabling OpenMP.
+   `HOMEBREW`, `HOMEBREW_INTEL`, or `MACPORTS`. Type `make OPT=-DNUSE_OPENMP` when disabling OpenMP.
 
-The default installation path for Homebrew seems to be changed. If the compilation under Homebrew fails,
-please replace the path `/usr/local/` with `/opt/homebrew/` in `makefile`.
+Homebrew's default installation path changes according to Mac's CPU type.
+If you use an Intel Mac, specify `HOMEBREW_INTEL` instead of `HOMEBREW`.
 
 ## Usage
 
@@ -170,20 +191,39 @@ see [Rigid registration](#rigid-registration).
 
 ### Kernel functions
 
-- `-G [1-4]`: Switch kernel functions.
+#### Standard kernels:
+
+- `-G [1-3]`: Switch kernel functions.
   - `-G1` Inverse multiquadric: `(||ym-ym'||^2+beta^2)^(-1/2)`
   - `-G2` Rational quadratic: `1-||ym-ym'||^2/(||ym-ym'||^2+beta^2)`
   - `-G3` Laplace: `exp(-|ym-ym'|/beta)`
-  - `-G4` Neural network: see [Williams, Neural computation, 1998] for the definition of the kernel.
-- `-b [real(s)]`: The parameter(s) of a kernel function.
-  - `-b [real]`: Beta. The parameter of a kernel function except the neural network kernel.
-  - `-b [real,real]`: The parameters of the neural network kernel. Do not insert whitespaces before and after comma.
 
 The Gaussian kernel `exp(-||ym-ym'||^2/2*beta^2)` is used unless specified.
-Here, `ym` represents the mth point in Y. Except the neural network kernel, the tuning parameter of
-the kernel functions is denoted by beta, which controls the range where deformation vectors are smoothed.
-For the neural network kernel, the first and second arguments of the option `-b` specify the standard deviations
-of the intercept and linear coefficients, respectively.
+Here, `ym` represents the mth point in Y. The tuning parameter of a kernel functions is denoted by beta,
+which controls the range where deformation vectors are smoothed.
+
+#### Geodesic kernel:
+
+- `-G [string,real,file]`: Geodesic kernel with an input mesh. E.g., `-G geodesic,0.2,triangles.txt`.
+  - 1st argument: The string `geodesic` only., i.e., the tag representing the geodesic kernel.
+  - 2nd argument: Tau. The rate controlling the balance between geodesic and Gaussian kernels.
+  - 3rd argument: The file that defines a triangle mesh.
+
+- `-G [string,real,int,real]`: Geodesic kernel without an input mesh. E.g., `-G geodesic,0.2,8,0.15`.
+  - 1st argument: The string `geodesic` only, i.e., the tag representing the geodesic kernel.
+  - 2nd argument: Tau. The rate controlling the balance between geodesic and Gaussian kernels.
+  - 3rd argument: The number of neighbors for each node, required for k-NN graph construction.
+  - 4th argument: The radius that defines neighbors for each node, required for k-NN graph construction.
+
+The geodesic kernel usually outperforms standard kernels when different parts of a source shape are closely located.
+If the mesh of a source shape is available, choose the first option; it typically works better than the second option.
+Otherwise, choose the second option; BCPD automatically creates the graph required for geodesic computations.
+The mesh file must be a tab-separated file that contains three integers for each line; a triangle is defined
+as a triplet of vertices. The following parameters tune the geodesic kernel:
+
+- `-b [real]`: Beta. Positive. Gaussian function's width.
+- `-K [int]`:  K tilde. Positive. Rank constraint on G.
+- `-z [real]`: Epsilon. Positive. Acceptable condition number of G.
 
 ## Acceleration
 ![alt text](https://github.com/ohirose/bcpd/blob/master/img/lucy.png?raw=true)
@@ -197,7 +237,7 @@ convergence. The following option accelerates VBI with default parameters:
 Downsampling and deformation vector interpolation, called BCPD++, accelerate non-rigid registration
 outside VBI. For example, the following options activate BCPD++:
 
-- `-DB,5000,0.08 -L100`: BCPD++ acceleration outside VBI.
+- `-DB,5000,0.08`: BCPD++ acceleration outside VBI.
 
 If N and M are larger than several thousand, activate either the internal or external acceleration.
 If N and M are more than several hundreds of thousands, activate both accelerations.
@@ -244,10 +284,7 @@ For more information, see [paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp
 
 ### Interpolation
 
-- `-L [int]`: #Nystrom samples for accelerating interpolation. E.g., `-L100`.
-
-Downsampling automatically activates the deformation vector interpolation. However, if the `-L` option is
-unspecified, the method runs without low-rank approximations; the execution will be quite slow or might fail.
+Downsampling automatically activates the deformation vector interpolation.
 The resulting registered shape with interpolation is output to the file with the suffix `y.interpolated.txt`.
 
 ## Options

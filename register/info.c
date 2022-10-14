@@ -33,11 +33,15 @@ static int omp=0;
 
 void printUsage(void){
   printf("\n");
-  printf(" BCPD/BCPD++ version %s (%s). OpenMP: %s.\n",_VERSION_,_DATE_,omp?"Turned on":"Not used");
-  printf(" Copyright (c) Osamu Hirose.                                                \n\n");
-  printf(" This software is an implementation of a point-set registration algorithm,  \n"  );
-  printf(" Bayesian coherent point drift (BCPD). It also includes an implementation of\n"  );
-  printf(" BCPD++, a faster algorithm based on downsampling and interpolation.        \n\n");
+  printf(" BCPD version %s (%s). OpenMP: %s.\n",_VERSION_,_DATE_,omp?"Turned on":"Turned off");
+  printf(" Copyright (c) Osamu Hirose                                                 \n\n");
+  printf(" This software executes the following registration algorithms:              \n"  );
+  printf("  o------------------------------------------------------------------------o\n"  );
+  printf("  | BCPD    | Bayesian coherent point drift.                               |\n"  );
+  printf("  | BCPD++  | A faster BCPD with downsampling and interpolation.           |\n"  );
+  printf("  | GBCPD   | Geodesic-based BCPD.                                         |\n"  );
+  printf("  | GBCPD++ | A faster GBCPD with downsampling and interpolation.          |\n"  );
+  printf("  o------------------------------------------------------------------------o\n\n");
   printf(" USAGE:                                                                     \n"  );
   printf("  o------------------------------------------------------------------------o\n"  );
   printf("  | ./bcpd -x <target point set> -y <source point set> (+ options)         |\n"  );
@@ -45,16 +49,19 @@ void printUsage(void){
   printf("  ** Tab-separated files only. Extension of the input file MUST be '.txt'.  \n\n");
   printf(" OPTIONS:                                                                   \n"  );
   printf("  Parameters    -w <omega>, -l <lambda>, -g <gamma> -k <kappa>              \n"  );
-  printf("  Acceleration  -J <rank:Kyx>, -K <rank:G>, kdtree: -p, -r <seed>           \n"  );
-  printf("  Kernel        -G <type:1,2,3,4,5>, -b <beta>, -b <c0,c1>                  \n"  );
+  printf("  Acceleration  -J <rank:P>, -K <rank:G>, kdtree: -p, -r <seed>             \n"  );
+  printf("  Downsampling  -D <type:x,y,b,X,Y,B, #points, radius>.                     \n"  );
+  printf("  Kernel                                                                    \n"  );
+  printf("    Standard:   -G <type:1,2,3> -b <beta>                                   \n"  );
+  printf("    Geodesic:   -G'geo,<tau>,<triangles>'  | geo-kernel with a mesh         \n"  );
+  printf("                -G'geo,<tau>,<nnk>,<nnr>'  | geo-kernel without a mesh      \n"  );
+  printf("                -b <beta>, -z <epsilon>, -K <rank:G>                        \n"  );
   printf("  Convergence   -n <#loops:max>, -N <#loops:min>, -c <tolerance>            \n"  );
   printf("  Normalization -u <type;e,x,y,n>                                           \n"  );
   printf("  File Output   -o <prefix>, -s <variables:y,x,u,v,a,c,e,T,P,Y,A(=all)>     \n"  );
   printf("  Terminal I/O  quiet mode: -q, history mode: -h, warning-disabled mode: -W \n\n");
-  printf("  Downsampling  -D <type:x,y,b,X,Y,B, #points, radius>.                     \n"  );
-  printf("  Interpolation -L <rank:G_ZZ/G_UU>                                         \n\n");
   printf("  *1) Parenthesis <...> specifies the argument of an option.                \n"  );
-  printf("  *2) The last two options activate BCPD++.                                 \n\n");
+  printf("  *2) The downsampling option activates BCPD++/GBCPD++.                     \n\n");
   printf(" DEFAULT:                                                                   \n"  );
   printf("  -x X.txt, -y Y.txt, -w 0, -l 2, -b 2, -n 500, -o output_, -c 1e-4, -u e   \n"  );
   printf("  ** All accleration options are disabled unless specified explicitly.      \n\n");
@@ -63,13 +70,14 @@ void printUsage(void){
   printf("  | ./bcpd -x X.txt -y Y.txt -w0.1 -l2 -b2 -J300 -K80 -p -n90 -c1e-6 -svYP |\n"  );
   printf("  o------------------------------------------------------------------------o\n\n");
   printf(" REFERENCE:                                                                 \n"  );
+  printf(" - Geodesic-Based Bayesian coherent point drift, IEEE TPAMI, 2022 (GBCPD).  \n"  );
   printf(" - A Bayesian formulation of coherent point drift, IEEE TPAMI, 2020 (BCPD). \n"  );
   printf(" - Accleelration of non-rigid point set registration with downsampling and  \n"  );
   printf("   Gaussian process regression, IEEE TPAMI, 2020 (BCDP++).                  \n\n");
   printf("\n");
 }
 
-static char warning[7][1024]= {
+static char warning[6][1024]= {
     "  o--- !!! WARNING !!! ------------------------------------------------o\n"
     "  |  The numbers of points in both point sets are large. The execution |\n"
     "  |  will be considerably slow. Please use options, -J, -K, -p, and -D |\n"
@@ -108,12 +116,6 @@ static char warning[7][1024]= {
     "  |  Excessively large beta might lead to an unstable computation due  |\n"
     "  |  to the rank deficiency of G. A smaller beta might be better.      |\n"
     "  o--------------------------------------------------------------------o\n",
-    "  o--- !!! WARNING !!! ------------------------------------------------o\n"
-    "  |  The interpolation option is activated but the option '-L' is not  |\n"
-    "  |  specified; the interpolation will be slow, or might fail. If so,  |\n"
-    "  |  activate the lowrank interpolation with '-L100', and retry.       |\n"
-    "  o--------------------------------------------------------------------o\n"
-    "  Do you want to continue the execution? [y/n] -- ",
 };
 
 static void yesno(void){
@@ -129,20 +131,22 @@ void printInfo(pwsz sz, pwpm pm){
   /* warning */
   if(pm.opt&PW_OPT_NWARN) goto skip;
   if(fmin(sz.M,ny)>=2000&&fmin(sz.N,nx)>=2000&&!sz.K) {fprintf(stderr,"\n%s",warning[0]);yesno();}
-  if(pm.lmd<1e8&&ny&&pm.L==0&&!(pm.opt&PW_OPT_1NN))   {fprintf(stderr,"\n%s",warning[6]);yesno();}
   if(pm.J&&!(pm.opt&PW_OPT_LOCAL))         {fprintf(stderr,"\n%s",warning[1]);}
   if(pm.J&&pm.J<150&&sz.M>=200&&sz.N>=200) {fprintf(stderr,"\n%s",warning[2]);}
   if(pm.K&&pm.K< 10&&sz.M>=100&&sz.N>=100) {fprintf(stderr,"\n%s",warning[3]);}
   if(pm.lmd>=1e6 &&sz.M>=2000&&sz.N>=2000) {fprintf(stderr,"\n%s",warning[4]);}
-  if(pm.bet[0]>=10&&pm.G<=3)               {fprintf(stderr,"\n%s",warning[5]);}
+  if(pm.bet>=10&&pm.G<=3)                  {fprintf(stderr,"\n%s",warning[5]);}
   skip:
 
   fprintf(stderr,"\n");
   fprintf(stderr,"  Input Data:\n");
-  fprintf(stderr,"    Point set 1 (target): [%s]\n", pm.fn[TARGET]);
-  fprintf(stderr,"    Point set 2 (source): [%s]\n", pm.fn[SOURCE]);
-  fprintf(stderr,"    Size of point set 1:  [%3d,%2d]\n", sz.N,sz.D);
-  fprintf(stderr,"    Size of point set 2:  [%3d,%2d]\n", sz.M,sz.D); fprintf(stderr,"\n");
+  fprintf(stderr,"    Point Set 1 (target): [%s]\n", pm.fn[TARGET]);
+  fprintf(stderr,"    Point Set 2 (source): [%s]\n", pm.fn[SOURCE]);
+  if(strlen(pm.fn[FACE_Y]))
+  fprintf(stderr,"    Triangles   (source): [%s]\n", pm.fn[FACE_Y]);
+  fprintf(stderr,"    Size of Point Set 1:  [%3d,%2d]\n", sz.N,sz.D);
+  fprintf(stderr,"    Size of Point Set 2:  [%3d,%2d]\n", sz.M,sz.D);
+  fprintf(stderr,"\n");
 
   fprintf(stderr,"  Parameters: \n");
   fprintf(stderr,"    omega   =  %.2lf\n", pm.omg);
@@ -157,15 +161,18 @@ void printInfo(pwsz sz, pwpm pm){
   fprintf(stderr,"\n");
   fprintf(stderr,"  Kernel:\n    ");
   switch(pm.G){
-    case 0: fprintf(stderr,"[Gaussian]");             break;
-    case 1: fprintf(stderr,"[Inverse Multiquadric]"); break;
-    case 2: fprintf(stderr,"[Rational Quadratic]");   break;
-    case 3: fprintf(stderr,"[Laplacian]");            break;
-    case 4: fprintf(stderr,"[Neural Network]");       break;
-    case 5: fprintf(stderr,"[Your Own Kernel]");      break;
+    case  0: if(pm.tau<=1e-5) fprintf(stderr,"[Gaussian]");
+             else             fprintf(stderr,"[Geodesic]");
+             break;
+    case  1: fprintf(stderr,"[Inverse Multiquadric]"); break;
+    case  2: fprintf(stderr,"[Rational Quadratic]");   break;
+    case  3: fprintf(stderr,"[Laplacian]");            break;
+    case  4: fprintf(stderr,"[Geodesic]");             break;
   }
-  if      (pm.G<=3) fprintf(stderr," with beta = %.2lf\n",pm.bet[0]);
-  else if (pm.G<=5) fprintf(stderr," with (c0,c1) = (%.2lf, %.2lf)\n",pm.bet[0],pm.bet[1]);
+  fprintf(stderr," with beta = %.2lf%s",pm.bet,pm.tau>1e-5?" and ":"\n");
+  if(pm.tau>1e-5){ fprintf(stderr,"tau = %.2lf\n",pm.tau);
+    if(pm.nnk>0) fprintf(stderr,"     *Surface Graph: %d-NNs, where max radius = %.3lf\n",pm.nnk,pm.nnr);
+  }
 
   fprintf(stderr,"\n");
   fprintf(stderr,"  Acceleration: \n");
@@ -187,16 +194,16 @@ void printInfo(pwsz sz, pwpm pm){
     if(sz.J) fprintf(stderr,"      Nystrom: J = %d\n", sz.J);
     else     fprintf(stderr,"      Nystrom: OFF\n");
     if(!(pm.opt&PW_OPT_LOCAL)) fprintf(stderr,"      KD tree: OFF\n");
-    else fprintf(stderr,"      KD tree: r = min(%.2lf,%.1lf*sigma) if sigma < %.2lf\n",pm.lim,pm.dlt,pm.btn);
+    else fprintf(stderr,"      KD Tree: r = min(%.2lf,%.1lf*sigma) if sigma < %.2lf\n",pm.lim,pm.dlt,pm.btn);
   } else fprintf(stderr,"    Fast P:  OFF\n");
   if(pm.dwn[SOURCE]){
     if(pm.opt&PW_OPT_1NN) fprintf(stderr,"    Interpolation: 1NN\n");
     else {
-      if(pm.L)  fprintf(stderr,"    Fast Interpolation:  L = %d\n",pm.L);
+      if(pm.K)  fprintf(stderr,"    Fast Interpolation:  L = %d\n",pm.K);
       else      fprintf(stderr,"    Fast Interpolation:  OFF\n");
     }
   }
-  if(pm.rns&&(pm.J||pm.K)) fprintf(stderr,"    Rand seed: %d\n",pm.rns);
+  if(pm.rns&&(pm.J||pm.K)) fprintf(stderr,"    Rand Seed: %d\n",pm.rns);
 
 
   fprintf(stderr,"\n");

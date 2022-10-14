@@ -81,7 +81,8 @@ char ** calloc2c (const int uw, const int ulen){
   return a;
 }
 
-void free2d(double **a, int M, int N){int m;for(m=0;m<M;m++){free(a[m]);} free(a);}
+void free2d(double **a, int M){int m;for(m=0;m<M;m++){free(a[m]);} free(a);}
+void free2i(int    **a, int M){int m;for(m=0;m<M;m++){free(a[m]);} free(a);}
 
 void write2d(const char *file, const double **X, int nr, int nc, const char* fmt, const char *na){
   FILE *fp; char *ext, mode='?'; double *buf; int m,n,M,N; double val; char str1[64],str2[64];

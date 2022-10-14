@@ -34,7 +34,7 @@
 
 #define SQ(x) ((x)*(x))
 double digamma(double x);
-double (*kernel[6])(const double*,const double*,int,const double*)={gaussk,imquad,rational,laplace,neural,mykernel};
+double (*kernel[4])(const double*,const double*,int,double)={gauss,imquad,rational,laplace};
 char   spinner[16][16]={
   "-    \0", "\\    \0",  "|    \0", "/    \0",
   "-    \0", " -   \0",   "  -  \0", "   - \0",
@@ -79,15 +79,16 @@ int bcpd(
   int           *   wi,   /*  W  |    *          | working memory (int)     */
   const double  *   X,    /*  I  | DN x 1        | target point set         */
   const double  *   Y,    /*  I  | DM x 1        | source point set         */
+  const double  *   LQ,   /*  I  | K + M x K     | only for geodesic kernel */
   const pwsz        sz,   /*  I  |               | D, M, N, K, J            */
   const pwpm        pm    /*  I  |               | tuning parameters        */
   ){
 
   double c,cc,val,val1,val2,c1,c2; double vol,diff,rold=1e100,reg=1e-20,dlt,lim; int flg,local; int mtd;
   double *S/*KK*/,*A/*KK*/,*B/*KD*/,*E/*MD*/,*C/*MK*/,*Q/*MK*/,*L/*K*/,*W/*DM*/,*G/*MM*/,*G1/*MM*/,*G2/*MM*/;
-  double *b/*M*/,*q/*N*/,*f/*N*/,*qX/*DN*/,*PX/*DM*/,*sx/*D*M*nlp*/,*sy/*D*M*nlp*/,*ix/*DM*/;
+  double *b/*M*/,*q/*N*/,*f/*N*/,*PX/*DM*/,*sx/*D*M*nlp*/,*sy/*D*M*nlp*/,*ix/*DM*/;
   double *xb/*D*/,*ub/*D*/,*phi/*DD*/,*psi/*DD*/,*Sxu/*DD*/,*dS/*D*/,*wk/*10D*/; struct timeval tick;
-  double *wdd/*K(K+11)*/,*wgd/*M+N+J+JJ*/; int *Tx,*Ty/*1+3N*/,*wdi/*M*/,*wgi/*M+N*/; const double *bet;
+  double *wdd/*K(K+11)*/,*wgd/*M+N+J+JJ*/; int *Tx,*Ty/*1+3N*/,*wdi/*M*/,*wgi/*M+N*/; double bet;
   int d,i,j,k,m,n,lp,D,K,M,N,J; int *ipiv,info,lwork1; char jobz='V',uplo='U'; double tr=0; int max;
   double omg,lmd,kpa,cnv; int nlp,opt; int sd=0,si=0; int T=pm.opt&PW_OPT_LOCAL,db=pm.opt&PW_OPT_DBIAS;
   double clc,cps=CLOCKS_PER_SEC,*treal=pf,*tcpu=pf+pm.nlp,*rprog=pf+2*pm.nlp; int pflog=pm.opt&PW_OPT_PFLOG;
@@ -104,7 +105,7 @@ int bcpd(
   |   alias: memory                                                |
   o---------------------------------------------------------------*/
   /* common: double-> 4M+2N+D(5M+N+13D+3), int->D                 */
-  b=wd+sd; sd+=M; qX=wd+sd; sd+=D*N; phi=wd+sd; sd+=D*D; dS=wd+sd; sd+=D;
+  b=wd+sd; sd+=M; /*-----*/ sd+=D*N; phi=wd+sd; sd+=D*D; dS=wd+sd; sd+=D;
   /*-----------*/ PX=wd+sd; sd+=M*D; psi=wd+sd; sd+=D*D; xb=wd+sd; sd+=D;
   f=wd+sd; sd+=N; W =wd+sd; sd+=D*M; Sxu=wd+sd; sd+=D*D; ub=wd+sd; sd+=D;
   q=wd+sd; sd+=N; E =wd+sd; sd+=D*M; ix =wd+sd; sd+=D*M; wk=wd+sd; sd+=lwork1;
@@ -119,7 +120,7 @@ int bcpd(
   /* gaussprod */
   wgd=(J||T)?wd+sd:NULL;
   wgi=(J||T)?wi+si:NULL;
-  if(J){sd+=D*(M+N)+J*J+J;si+=M+N;}
+  if(J){sd+=(D+1)*J+J*(D+2)*+J*J;si+=M+N;}
   if(T){sd+=2*max;si+=max*(8+mtd);}
   /* tree */
   Tx=T?wi+si:NULL; si+=T?3*max+1:0;
@@ -154,8 +155,11 @@ int bcpd(
   /* tree */
   if(T) kdtree(Tx,wgi,wgd,X,D,N);
   /* G */
-  if(!K) for(i=0;i<M;i++)for(j=0;j<M;j++) G[i+M*j]=kernel[pm.G](Y+D*i,Y+D*j,D,bet);
-  else   gramdecomp(Q,L,wdd,wdi,Y,D,M,K,(const double *)bet,kernel[pm.G]);
+  if(!K)
+    #pragma omp parallel for private (j)
+    for(i=0;i<M;i++)for(j=i;j<M;j++) G[i+M*j]=G[j+M*i]=kernel[pm.G](Y+D*i,Y+D*j,D,bet);
+  else if(LQ){L=(double*)LQ;Q=(double*)LQ+K;}
+  else gramdecomp(Q,L,wdd,wdi,Y,D,M,K,bet,kernel[pm.G]);
   /* save comp. profile */
   if(pflog){gettimeofday(&tick,NULL);treal[0]+=tick.tv_sec+tick.tv_usec/1e6;tcpu[0]+=clock()/cps;rprog[0]=*r;}
 
@@ -169,15 +173,12 @@ int bcpd(
     local=(*r<pm.btn); flg=(local&&(opt&PW_OPT_LOCAL))?GRAM_FLAG_LOCAL:0;
     c=(pow(2.0*M_PI*SQ(*r),0.5*D)*omg)/(vol*(1-omg)); /* c */
     for(m=0;m<M;m++) b[m]=a[m]*exp(-(D/2)*sgm[m]*SQ((*s)/(*r)));
-    gaussprod(q,wgd,wgi,y,X,b,Ty,D,M,N,J,*r,dlt,lim,flg|GRAM_FLAG_TRANS|GRAM_FLAG_BUILD);/* Kt1 */
+
+    gaussprod (q,wgd,wgi,y,X,b,Ty,D,M,N,J,*r,dlt,lim,flg|GRAM_FLAG_TRANS|GRAM_FLAG_BUILD);/* Kt1 */
     for(n=0;n<N;n++) q[n]=1.0/(q[n]+c); /* q */
     for(n=0;n<N;n++) f[n]=1.0-(q[n]*c); /* f */
-    if(flg&GRAM_FLAG_LOCAL) gaussprod_kdbatch(w,PX,wgi,y,X,q,Tx,D,M,N,*r,dlt,lim); /* w, PX */
-    else{
-      gaussprod(w,wgd,wgi,y,X,q,Tx,D,M,N,J,*r,dlt,lim,flg|GRAM_FLAG_REUSE); /* w */
-      for(n=0;n<N;n++)for(d=0;d<D;d++) qX[n+N*d]=q[n]*X[d+D*n]; /* qX */
-      for(d=0;d<D;d++) gaussprod(PX+M*d,wgd,wgi,y,X,qX+N*d,Tx,D,M,N,J,*r,dlt,lim,flg|GRAM_FLAG_REUSE); /* PX */
-    }
+    gaussprod_batch (w,PX,wgd,wgi,y,X,q,Tx,D,M,N,J,*r,dlt,lim,flg);
+
     for(m=0;m<M;m++){w[m]*=b[m];w[m]=w[m]<reg?reg:w[m];}
     for(d=0;d<D;d++)for(m=0;m<M;m++) PX[m+M*d]*=b[m];
     *Np=0;for(m=0;m<M;m++) *Np+=w[m]; /* Np */
@@ -216,10 +217,12 @@ int bcpd(
       for(k=0;k<K;k++)for(d=0;d<D;d++){val=0;for(m=0;m<M;m++){val+=Q[m+M*k]*W[d+D*m];} B[k+K*d]=val*L[k];}
       for(d=0;d<D;d++)for(m=0;m<M;m++){val=0;for(k=0;k<K;k++){val+=Q[m+M*k]*B[k+K*d];} u[d+D*m]=val+Y[d+D*m];}
     }
-    else{/* CASE: full-rank */
+    else{/* CASE: full-rank */ //char trs='t'; double one=1;
       #pragma omp parallel for private (j)
       for(i=0;i<M;i++)for(j=i;j<M;j++) G1[i+M*j]=G1[j+M*i]=G[i+M*j]+(i==j?cc/w[i]:0);
       dposv_(&uplo,&M,&D,G1,&M,E,&M,&info); if(info!=0){goto err06;}
+      for(m=0;m<M;m++)for(d=0;d<D;d++) u[d+D*m]=Y[d+D*m];
+      #pragma omp parallel for private (d) private (i)
       for(m=0;m<M;m++)for(d=0;d<D;d++){u[d+D*m]=Y[d+D*m];for(i=0;i<M;i++)u[d+D*m]+=G[m+M*i]*E[i+M*d];}
       if(db){tr=0;
         for(i=0;i<M;i++)for(j=i;j<M;j++) G2[i+M*j]=G2[j+M*i]=G[i+M*j];
@@ -234,6 +237,7 @@ int bcpd(
     /*---------------------------------------------------------------o
     |   update: s, R, t                                              |
     o---------------------------------------------------------------*/
+    if(pm.opt&PW_OPT_NOSIM) goto skip;
     /* xb, yb */
     for(d=0;d<D;d++){val=0;for(m=0;m<M;m++){val+=u[d+D*m]*w[m];} ub[d]=val/(*Np);}
     for(d=0;d<D;d++){val=0;for(m=0;m<M;m++){val+=x[d+D*m]*w[m];} xb[d]=val/(*Np);}
@@ -255,6 +259,7 @@ int bcpd(
     *s=c1/c2;
     /* t */
     for(d=0;d<D;d++){val=0;for(i=0;i<D;i++)val+=R[d+D*i]*ub[i];t[d]=xb[d]-(*s)*val;}
+    skip:
     /* y */
     for(d=0;d<D;d++)for(m=0;m<M;m++){val=0;for(i=0;i<D;i++){val+=R[d+D*i]*u[i+D*m];} y[d+D*m]=(*s)*val+t[d];}
     /*---------------------------------------------------------------o
@@ -265,7 +270,7 @@ int bcpd(
     for(m=0;m<M;m++)for(d=0;d<D;d++) *r+=SQ(y[d+D*m])*w[m];
     for(m=0;m<M;m++)for(d=0;d<D;d++) *r-=2*PX[m+M*d]*y[d+D*m];
     if(*Np<0){goto err05;}
-    *r/=(*Np)*D; *r=*r<0?0:*r; *r=sqrt(*r);
+    *r/=(*Np)*D; *r=fabs(*r); *r=sqrt(*r);
     diff=fabs(rold-*r);
     print_status(lp,*Np,*r,diff,cnv,opt,J,local);
     if(lp>pm.llp&&(*r<cnv||diff<cnv)){
@@ -304,7 +309,7 @@ void interpolate(
   ){
 
   int d,i,j,k,m,n; int D=sz.D,K=sz.K,M=sz.M; int *wi; double *u,*ix,*A,*B,*E,*G,*L,*Q,*W,*wd; char uplo='U'; int *U;
-  int info; const double *bet=pm.bet,lmd=pm.lmd; double val,cc=pm.lmd*SQ(*r/(*s)); int si=sizeof(int),sd=sizeof(double);
+  int info; double bet=pm.bet,lmd=pm.lmd; double val,cc=pm.lmd*SQ(*r/(*s)); int si=sizeof(int),sd=sizeof(double);
 
   /* allocation */
   W =calloc(D*M,sd); ix=calloc(D*M,sd);
@@ -315,13 +320,12 @@ void interpolate(
   cc=lmd*SQ(*r/(*s));
   for(d=0;d<D;d++)for(m=0;m<M;m++){val=0;for(i=0;i<D;i++){val+=R[i+D*d]*(x[i+D*m]-t[i]);} ix[d+D*m]=val/(*s);}
   for(d=0;d<D;d++)for(m=0;m<M;m++) E[d+D*m]=W[m+M*d]=ix[d+D*m]-y[d+D*m];
-  if(K&&pm.L){ /* nystrom */
-    K=pm.L;
+  if(K){ /* nystrom */
     /* coefficient: W */
     A=calloc(K*K,sd); L =calloc(K,sd); wd=calloc(K*(K+11),sd);
     B=calloc(K*D,sd); U =calloc(N,si);
     Q=calloc(M*K,sd); wi=calloc(M,si);
-    gramdecomp(Q,L,wd,wi,y,D,M,K,(const double *)bet,kernel[pm.G]);
+    gramdecomp(Q,L,wd,wi,y,D,M,K,bet,kernel[pm.G]);
     #pragma omp parallel for private (j) private (m) private (val)
     for(i=0;i<K;i++)for(j=i;j<K;j++){val=(i==j?cc/L[i]:0);for(m=0;m<M;m++){val+=w[m]*Q[m+M*i]*Q[m+M*j];} A[i+K*j]=A[j+K*i]=val;}
     for(d=0;d<D;d++)for(m=0;m<M;m++) E[d+D*m]*=w[m];
@@ -384,5 +388,99 @@ void interpolate_1nn(
   for(d=0;d<D;d++)for(n=0;n<N;n++){val=0;for(i=0;i<D;i++){val+=R[d+D*i]*U[i+D*n];} T[d+D*n]=(*s)*val+t[d];}
   /* free */
   free(m);free(e);free(U);free(bi);free(bd);free(Ty);
+}
+
+
+void interpolate_geok(
+  double         *T,
+  const double   *Y,
+  const int       N,
+  const double   *x,
+  const double   *y,
+  const double   *w,
+  const double   *s,
+  const double   *R,
+  const double   *t,
+  const double   *r,
+  const double   *LQ,
+  const int      *U,
+  const pwsz     sz,
+  const pwpm     pm
+  ){
+
+  int d,i,j,k,m,n; int D=sz.D,K=sz.K,M=sz.M; double *u,*ix,*A,*B,*C,*S,*E,*W; char uplo='U';
+  int info; const double lmd=pm.lmd; double val,cc; int sd=sizeof(double);
+  const double *L=LQ,*Q=LQ+K; double *Qy;
+
+  assert(K);
+
+  /* allocation */
+  W =calloc(D*M,sd); ix=calloc(D*M,sd);
+  E =calloc(D*M,sd); u =calloc(D*N,sd);
+  A =calloc(K*K,sd); Qy=calloc(K*M,sd);
+  B =calloc(K*D,sd);
+  C =calloc(M*K,sd);
+  S =calloc(K*K,sd);
+
+  for(k=0;k<K;k++)for(m=0;m<M;m++) Qy[m+M*k]=Q[U[m]+N*k];
+  /* switch: non-rigid and rigid */
+  if(lmd>=1e8){for(d=0;d<D;d++)for(n=0;n<N;n++){{u[d+D*n]=Y[d+D*n];}} goto skip;}
+
+  cc=lmd*SQ(*r/(*s));
+  for(d=0;d<D;d++)for(m=0;m<M;m++){val=0;for(i=0;i<D;i++){val+=R[i+D*d]*(x[i+D*m]-t[i]);} ix[d+D*m]=val/(*s);}
+  for(m=0;m<M;m++)for(d=0;d<D;d++) E[m+M*d]=ix[d+D*m]-y[d+D*m];
+  for(m=0;m<M;m++)for(k=0;k<K;k++) C[m+M*k]=w[m]*Qy[m+M*k];
+  for(k=0;k<K;k++)for(d=0;d<D;d++){B[k+K*d]=0;for(m=0;m<M;m++) B[k+K*d]+=C[m+M*k]*E[m+M*d];}
+  #pragma omp parallel for private (j) private (m) private(val)
+  for(i=0;i<K;i++)for(j=0;j<K;j++){val=0;for(m=0;m<M;m++){val+=Qy[m+M*i]*C[m+M*j];} A[i+K*j]=val;}
+  for(i=0;i<K;i++)for(j=0;j<K;j++) S[i+K*j]=A[i+K*j];
+  for(k=0;k<K;k++) A[k+K*k]+=cc/L[k];
+  dpotrf_(&uplo,&K,A,&K,&info);         assert(info==0);
+  dpotrs_(&uplo,&K,&D,A,&K,B,&K,&info); assert(info==0);
+  dpotrs_(&uplo,&K,&K,A,&K,S,&K,&info); assert(info==0);
+  for(i=0;i<K;i++)for(j=0;j<K;j++) A[i+K*j]=L[i]*((i==j?1:0)-S[j+K*i]);
+  for(m=0;m<M;m++)for(d=0;d<D;d++) W[d+D*m]=w[m]*E[m+M*d];
+  for(m=0;m<M;m++)for(d=0;d<D;d++)for(k=0;k<K;k++) W[d+D*m]-=C[m+M*k]*B[k+K*d];
+  for(m=0;m<M;m++)for(d=0;d<D;d++) W[d+D*m]/=cc;
+  /* u */
+  for(k=0;k<K;k++)for(d=0;d<D;d++){val=0;for(m=0;m<M;m++){val+=Qy[m+M*k]*W[d+D*m];} B[k+K*d]=val*L[k];}
+  for(d=0;d<D;d++)for(n=0;n<N;n++){val=0;for(k=0;k<K;k++){val+=Q [n+N*k]*B[k+K*d];} u[d+D*n]=val+Y[d+D*n];}
+
+  skip:
+  for(d=0;d<D;d++)for(n=0;n<N;n++){val=0;for(i=0;i<D;i++){val+=R[d+D*i]*u[i+D*n];} T[d+D*n]=(*s)*val+t[d];}
+
+  free(A); free(Qy);
+  free(B); free(ix);
+  free(E); free(u);
+  free(W);
+}
+
+void interpolate_x(
+    double       *x,
+    const double *y,
+    const double *X,
+    int           D,
+    int           M,
+    int           N,
+    const double  r,
+    pwpm          pm
+  ){
+  int d,k,m,K=30; double e,val; double *p,*P; int *T,*q,*Q;
+  int me=-1; int si=sizeof(int),sd=sizeof(double);
+
+  K=K<M?K:M;
+
+  P=calloc(M*(K+1),sd); T=kdtree_build(X,D,N);
+  Q=calloc(M*(K+1),si);
+
+  //#pragma omp parallel for private (q) private (p) private (d) private (e) private (k)
+  for(m=0;m<M;m++){q=Q+(K+1)*m;p=P+(K+1)*m; knnsearch(q,K,2*r,y+D*m,me,X,T,D,N);
+    if(*q){*p=0;for(k=1;k<=*q;k++){p[k]=gauss(y+D*m,X+D*q[k],D,r);*p+=p[k];}}
+    else{*p=1.0;p[1]=1.0;*q=1;nnsearch(q+1,&e,y+D*m,X,T,D,N);}
+    for(d=0;d<D;d++){val=0;for(k=1;k<=*q;k++){val+=p[k]*X[d+D*q[k]];} x[d+D*m]=val/(*p);}
+  }
+  free(P);free(Q);free(T);
+
+  return;
 }
 
