@@ -1,6 +1,8 @@
 
 # Bayesian Coherent Point Drift (+ Geodesic Kernel)
 
+**NEWS** 13 Oct 2022. [A new article](https://ieeexplore.ieee.org/document/9918058) has been published.
+
 This software is an implementation of non-rigid registration algorithms, Bayesian coherent point drift (BCPD)
 and its faster variant called BCPD++. It also includes geodesic-based BCPD (GBCPD) and its accelerated variant (GBCPD++),
 which define the shape deformation prior using geodesic distance. The software has the following characteristics:
@@ -10,7 +12,7 @@ which define the shape deformation prior using geodesic distance. The software h
 - **Multipurpose**. It performs rigid registration under appropriate parameters to find the partial overlap between 3D scans.
 
 For more information, see
-[Hirose2022](https://ieeexplore.ieee.org/document/9918058) (GBCPD/GBCPD++),
+[Hirose2022](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9918058) (GBCPD/GBCPD++),
 [Hirose2020a](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8985307) (BCPD), and
 [Hirose2020b](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9290402) (BCPD++).
 Also, several examples can be watched in
