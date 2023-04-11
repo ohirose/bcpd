@@ -1,8 +1,7 @@
 
 # Bayesian Coherent Point Drift (+ Geodesic Kernel)
 
-- 06 Feb 2023 - I closed the issue page for several reasons. If you have any questions, please email ohirose.univ+bcpd atmark gmail.com with your name and affiliation.
-- 13 Oct 2022 - [A new article](https://ieeexplore.ieee.org/document/9918058) has been published.
+-- 7 Apr 2023 - [A new article](https://ieeexplore.ieee.org/document/9918058) was officially published.
 
 This software is an implementation of non-rigid registration algorithms, Bayesian coherent point drift (BCPD)
 and its faster variant called BCPD++. It also includes geodesic-based BCPD (GBCPD) and its accelerated variant (GBCPD++),
@@ -21,6 +20,7 @@ Also, several examples can be watched in
 [[Video 2]](https://youtu.be/pbLVMDj1Zro),
 [[Video 3]](https://youtu.be/cET6gKAvjw0),
 [[Video 4]](https://youtu.be/SoUTbH2tJj8).
+If you have any questions, kindly email ohirose.univ+bcpd(at)gmail.com with your name and affiliation.
 
 ![alt text](https://github.com/ohirose/bcpd/blob/master/img/transfer.jpg?raw=true)
 
