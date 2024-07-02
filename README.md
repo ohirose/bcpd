@@ -144,6 +144,8 @@ Therefore, it might be quite slower than the one compiled in a Mac/Linux system.
 Homebrew's default installation path changes according to Mac's CPU type.
 If you use an Intel Mac, specify `HOMEBREW_INTEL` instead of `HOMEBREW`.
 
+- 2 Jul 2024: Homebrew changed OpenMP's default installation path. If the compilation fails, replace `homebrew` with `homebrew/opt/libomp` in `makefile`.
+
 ## Usage
 
 Type the following command in the terminal window for Mac/Linux:
