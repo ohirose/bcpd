@@ -18,9 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+double sgauss   (const double *x, const double *y, int D);
 double gauss    (const double *x, const double *y, int D, double h);
 double laplace  (const double *x, const double *y, int D, double h);
 double imquad   (const double *x, const double *y, int D, double h);
 double rational (const double *x, const double *y, int D, double h);
 double neural   (const double *x, const double *y, int D, double h);
 double mykernel (const double *x, const double *y, int D, double h);
+double anigauss (const double *x, const double *y, int D, double *w);

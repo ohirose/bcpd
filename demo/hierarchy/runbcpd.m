@@ -37,13 +37,8 @@ function T=runbcpd(fnx,fny,prm,meth,fnf)
   prm2=sprintf('-J%s -K%s -p -u%s',J,K,nrm);
   prm3=sprintf('-c%s -n%s -h -r1',c,n);
   cmd =sprintf('%s -x%s -y%s %s %s %s %s',bcpd,fnx,fny,prmm,prm1,prm2,prm3);
-  system(cmd); %optpath3
+  system(cmd);
  
   %% output
-  if meth==3
-    T=load('output_y.interpolated.txt');
-  else
-    T=load('output_y.txt');
-  end
- 
+  T=load('output_y.txt');
 end 

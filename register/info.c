@@ -35,19 +35,29 @@ void printUsage(void){
   printf("\n");
   printf(" BCPD version %s (%s). OpenMP: %s.\n",_VERSION_,_DATE_,omp?"Turned on":"Turned off");
   printf(" Copyright (c) Osamu Hirose                                                 \n\n");
-  printf(" This software executes the following registration algorithms:              \n"  );
+  printf(" This software contains the following algorithms:                           \n"  );
   printf("  o------------------------------------------------------------------------o\n"  );
-  printf("  | BCPD    | Bayesian coherent point drift.                               |\n"  );
-  printf("  | BCPD++  | A faster BCPD with downsampling and interpolation.           |\n"  );
-  printf("  | GBCPD   | Geodesic-based BCPD.                                         |\n"  );
-  printf("  | GBCPD++ | A faster GBCPD with downsampling and interpolation.          |\n"  );
-  printf("  o------------------------------------------------------------------------o\n\n");
+  printf("  | DET     | Domain elastic transform                                     |\n"  );
+  printf("  | BCPD    | Bayesian coherent point drift                                |\n"  );
+  printf("  | GBCPD   | Geodesic-based BCPD                                          |\n"  );
+  printf("  | DLD     | Dependent landmark drift                                     |\n"  );
+  printf("  o------------------------------------------------------------------------o\n"  );
+  printf("  * All algorithms can be accelerated by downsampling & interpolation.      \n\n");
   printf(" USAGE:                                                                     \n"  );
+  printf("  Shape registration (BCPD/GBCPD):                                          \n"  );
   printf("  o------------------------------------------------------------------------o\n"  );
   printf("  | ./bcpd -x <target point set> -y <source point set> (+ options)         |\n"  );
+  printf("  o------------------------------------------------------------------------o\n\n");
+  printf("  Function registration (DET):                                              \n"  );
   printf("  o------------------------------------------------------------------------o\n"  );
-  printf("  ** Tab-separated files only. Extension of the input file MUST be '.txt'.  \n\n");
+  printf("  | ./bcpd -x <set:x> -X <set:f(x)> -y <set:y> -Y <set:f(y)> (+ options)   |\n"  );
+  printf("  o------------------------------------------------------------------------o\n\n");
+  printf("  Shape model fitting (DLD):                                                \n"  );
+  printf("  o------------------------------------------------------------------------o\n"  );
+  printf("  | ./bcpd -x <target> -y <mean> -C <shape cov: [L';Q]> (+ options)        |\n"  );
+  printf("  o------------------------------------------------------------------------o\n\n");
   printf(" OPTIONS:                                                                   \n"  );
+  printf("  Model         -T <type:r,sr,n> r: rigid, sr: similar, n: nonrigid only    \n"  );
   printf("  Parameters    -w <omega>, -l <lambda>, -g <gamma> -k <kappa>              \n"  );
   printf("  Acceleration  -J <rank:P>, -K <rank:G>, kdtree: -p, -r <seed>             \n"  );
   printf("  Downsampling  -D <type:x,y,b,X,Y,B, #points, radius>.                     \n"  );
@@ -58,10 +68,10 @@ void printUsage(void){
   printf("                -b <beta>, -z <epsilon>, -K <rank:G>                        \n"  );
   printf("  Convergence   -n <#loops:max>, -N <#loops:min>, -c <tolerance>            \n"  );
   printf("  Normalization -u <type;e,x,y,n>                                           \n"  );
-  printf("  File Output   -o <prefix>, -s <variables:y,x,u,v,a,c,e,T,P,Y,A(=all)>     \n"  );
+  printf("  File Output   -o <prefix>, -s <variables:y,x,v,a,c,e,T,P,Y,A(=all)>       \n"  );
   printf("  Terminal I/O  quiet mode: -q, history mode: -h, warning-disabled mode: -W \n\n");
   printf("  *1) Parenthesis <...> specifies the argument of an option.                \n"  );
-  printf("  *2) The downsampling option activates BCPD++/GBCPD++.                     \n\n");
+  printf("  *2) The downsampling option enables DET++/BCPD++/GBCPD++.                 \n\n");
   printf(" DEFAULT:                                                                   \n"  );
   printf("  -x X.txt, -y Y.txt, -w 0, -l 2, -b 2, -n 500, -o output_, -c 1e-4, -u e   \n"  );
   printf("  ** All accleration options are disabled unless specified explicitly.      \n\n");
@@ -70,10 +80,14 @@ void printUsage(void){
   printf("  | ./bcpd -x X.txt -y Y.txt -w0.1 -l2 -b2 -J300 -K80 -p -n90 -c1e-6 -svYP |\n"  );
   printf("  o------------------------------------------------------------------------o\n\n");
   printf(" REFERENCE:                                                                 \n"  );
-  printf(" - Geodesic-Based Bayesian coherent point drift, IEEE TPAMI, 2022 (GBCPD).  \n"  );
-  printf(" - A Bayesian formulation of coherent point drift, IEEE TPAMI, 2020 (BCPD). \n"  );
+  printf(" - Function registration: Domain elastic transform, under review, (DET).    \n"  );
+  printf(" - Geodesic-based Bayesian coherent point drift, IEEE TPAMI, 2023 (GBCPD).  \n"  );
+  printf(" - A Bayesian formulation of coherent point drift, IEEE TPAMI, 2021 (BCPD). \n"  );
   printf(" - Accleelration of non-rigid point set registration with downsampling and  \n"  );
-  printf("   Gaussian process regression, IEEE TPAMI, 2020 (BCDP++).                  \n\n");
+  printf("   Gaussian process regression, IEEE TPAMI, 2021 (BCDP++).                  \n\n");
+  printf(" CONTACT:                                                                   \n"  );
+  printf(" - Please email to the following address if you have any questions:         \n"  );
+  printf("   ohirose%s%s%s%s (Osamu Hirose) %s",".univ","+bcpd","@","gmail.com",     "\n\n");
   printf("\n");
 }
 
@@ -122,15 +136,16 @@ static void yesno(void){
   char c; int n; n=scanf("%c",&c); if(n==0||(c!='y'&&c!='Y')){fprintf(stderr,"  Abort.\n\n"); exit(EXIT_SUCCESS);}
 }
 
-void printInfo(pwsz sz, pwpm pm){
-  int nx,ny; double rx,ry; char stype[3][32]={"random sampling","inverse density","voxel grid"};
+void printInfo(pwsz sz, pwpm pm){ int flag;
+  int nx,ny; double rx,ry; char stype[3][32]={"random sampling","inverse density","voxel grid"}; char model[64],algo[64];
   nx=pm.dwn[TARGET]; rx=pm.dwr[TARGET];
   ny=pm.dwn[SOURCE]; ry=pm.dwr[SOURCE];
 
-  fprintf(stderr,"\n  BCPD version %s (%s). OpenMP: %s.\n",_VERSION_,_DATE_,omp?"Turned on":"Not used");
+  fprintf(stderr,"\n  BCPD/DET/DLD version %s (%s). OpenMP: %s.\n",_VERSION_,_DATE_,omp?"Turned on":"Not used");
   /* warning */
   if(pm.opt&PW_OPT_NWARN) goto skip;
-  if(fmin(sz.M,ny)>=2000&&fmin(sz.N,nx)>=2000&&!sz.K) {fprintf(stderr,"\n%s",warning[0]);yesno();}
+  flag=sz.M>=4000&&sz.N>=4000&&nx==0&&ny==0&&sz.J==0&&sz.K==0;
+  if(flag){fprintf(stderr,"\n%s",warning[0]);yesno();}
   if(pm.J&&!(pm.opt&PW_OPT_LOCAL))         {fprintf(stderr,"\n%s",warning[1]);}
   if(pm.J&&pm.J<150&&sz.M>=200&&sz.N>=200) {fprintf(stderr,"\n%s",warning[2]);}
   if(pm.K&&pm.K< 10&&sz.M>=100&&sz.N>=100) {fprintf(stderr,"\n%s",warning[3]);}
@@ -140,24 +155,70 @@ void printInfo(pwsz sz, pwpm pm){
 
   fprintf(stderr,"\n");
   fprintf(stderr,"  Input Data:\n");
-  fprintf(stderr,"    Point Set 1 (target): [%s]\n", pm.fn[TARGET]);
-  fprintf(stderr,"    Point Set 2 (source): [%s]\n", pm.fn[SOURCE]);
+  if(strlen(pm.fn[FUNC_Y])){
+    fprintf(stderr,"\n");
+    fprintf(stderr,"    Target Function Domain:  [%s]\n", pm.fn[TARGET]);
+    fprintf(stderr,"    Source Function Domain:  [%s]\n", pm.fn[SOURCE]);
+    fprintf(stderr,"    Target Domain Dim, Size: [%d,%3d]\n", sz.D,sz.N);
+    fprintf(stderr,"    Source Domain Dim, Size: [%d,%3d]\n", sz.D,sz.M);
+    fprintf(stderr,"\n");
+    fprintf(stderr,"    Target Function Values:  [%s]\n", pm.fn[FUNC_X]);
+    fprintf(stderr,"    Source Function Values:  [%s]\n", pm.fn[FUNC_Y]);
+    fprintf(stderr,"    Function Codomain Dim:   [%d]\n", sz.Df);
+  } else if(strlen(pm.fn[COV_LQ])){
+    fprintf(stderr,"    Target Shape:         [%s]\n", pm.fn[TARGET]);
+    fprintf(stderr,"    Model Shape:          [%s]\n", pm.fn[SOURCE]);
+    fprintf(stderr,"    Shape Covariance:     [%s]\n", pm.fn[COV_LQ]);
+    fprintf(stderr,"    Size of Target Shape: [%2d,%2d]\n", sz.N,sz.D);
+    fprintf(stderr,"    Size of Model Shape:  [%2d,%2d]\n", sz.M,sz.D);
+    fprintf(stderr,"    #Shape Variations     [%2d]\n",     sz.K);
+  } else {
+    fprintf(stderr,"    Point Set 1 (target): [%s]\n", pm.fn[TARGET]);
+    fprintf(stderr,"    Point Set 2 (source): [%s]\n", pm.fn[SOURCE]);
+    fprintf(stderr,"    Size of Point Set 1:  [%3d,%2d]\n", sz.N,sz.D);
+    fprintf(stderr,"    Size of Point Set 2:  [%3d,%2d]\n", sz.M,sz.D);
+  }
   if(strlen(pm.fn[FACE_Y]))
   fprintf(stderr,"    Triangles   (source): [%s]\n", pm.fn[FACE_Y]);
-  fprintf(stderr,"    Size of Point Set 1:  [%3d,%2d]\n", sz.N,sz.D);
-  fprintf(stderr,"    Size of Point Set 2:  [%3d,%2d]\n", sz.M,sz.D);
   fprintf(stderr,"\n");
 
   fprintf(stderr,"  Parameters: \n");
   fprintf(stderr,"    omega   =  %.2lf\n", pm.omg);
+  if(pm.opt&PW_OPT_NONRG) goto skip_lmd;
   if(pm.lmd<1e3)   fprintf(stderr,"    lambda  =  %.2lf", pm.lmd);
   else             fprintf(stderr,"    lambda  =  %.2e",  pm.lmd);
-  if(pm.G==0) fprintf(stderr,"  --> the expected drift length = %.3lf\n",sqrt(sz.D/pm.lmd));
+  if(pm.G==0&&!strlen(pm.fn[COV_LQ])) fprintf(stderr,"  --> the expected drift length = %.3lf\n",sqrt(sz.D/pm.lmd));
   else        fprintf(stderr,"\n");
+  skip_lmd:
   fprintf(stderr,"    gamma   =  %.2lf\n", pm.gma);
   if(pm.kpa<=ZERO) fprintf(stderr,"    kappa   =  inf\n");
   else             fprintf(stderr,"    kappa   =  %lf\n", pm.kpa);
 
+  if(strlen(pm.fn[COV_LQ]))      strcpy(algo,"DLD");
+  else if(strlen(pm.fn[FUNC_Y])) strcpy(algo,"DET");
+  else if((pm.nnk||strlen(pm.fn[FACE_Y]))&&pm.tau>1e-5) strcpy(algo,"GBCPD");
+  else strcpy(algo,"BCPD");
+  if(ny) strcat(algo,"++");
+
+  fprintf(stderr,"\n");
+  fprintf(stderr,"  Algorithm: %s\n",algo);
+
+  if(pm.opt&PW_OPT_AFFIN){
+    if(pm.opt&PW_OPT_NONRG)                          strcpy(model,"Ay+t (affine)"                       );
+    else                                             strcpy(model,"A(y+v)+t (affine + nonrigid + scale)");
+  }
+  else{
+    if((pm.opt&PW_OPT_NONRG)&&(pm.opt&PW_OPT_NOSCL)) strcpy(model,"Ry+t (rigid)"                        );
+    else if(pm.opt&PW_OPT_NOSIM)                     strcpy(model,"y+v (nonrigid)"                      );
+    else if(pm.opt&PW_OPT_NONRG)                     strcpy(model,"sRy+t (rigid + scale)"               );
+    else if(pm.opt&PW_OPT_NOSCL)                     strcpy(model,"R(y+v)+t (rigid + nonrigid)"         );
+    else                                             strcpy(model,"sR(y+v)+t (nonrigid + rigid + scale)");
+  }
+
+  fprintf(stderr,"\n");
+  fprintf(stderr,"  Transformation Model:\n    %s\n",model);
+
+  if(pm.opt&PW_OPT_NONRG||strlen(pm.fn[COV_LQ])) goto skip_kernel;
   fprintf(stderr,"\n");
   fprintf(stderr,"  Kernel:\n    ");
   switch(pm.G){
@@ -173,6 +234,7 @@ void printInfo(pwsz sz, pwpm pm){
   if(pm.tau>1e-5){ fprintf(stderr,"tau = %.2lf\n",pm.tau);
     if(pm.nnk>0) fprintf(stderr,"     *Surface Graph: %d-NNs, where max radius = %.3lf\n",pm.nnk,pm.nnr);
   }
+  skip_kernel:
 
   fprintf(stderr,"\n");
   fprintf(stderr,"  Acceleration: \n");
@@ -187,8 +249,10 @@ void printInfo(pwsz sz, pwpm pm){
     else if(ry<0) fprintf(stderr,"[%s: r=%.3f]\n",stype[2],-ry);
     else          fprintf(stderr,"[%s]\n",stype[0]);
   }
-  if(sz.K)   fprintf(stderr,"    Fast G:  K = %d\n",sz.K);
-  else       fprintf(stderr,"    Fast G:  OFF\n");
+  if(!(pm.opt&PW_OPT_NONRG)){
+    if(sz.K)   fprintf(stderr,"    Fast G:  K = %d\n",sz.K);
+    else       fprintf(stderr,"    Fast G:  OFF\n");
+  }
   if(sz.J||pm.opt&PW_OPT_LOCAL){
     fprintf(stderr,"    Fast P:  \n");
     if(sz.J) fprintf(stderr,"      Nystrom: J = %d\n", sz.J);
@@ -196,12 +260,9 @@ void printInfo(pwsz sz, pwpm pm){
     if(!(pm.opt&PW_OPT_LOCAL)) fprintf(stderr,"      KD tree: OFF\n");
     else fprintf(stderr,"      KD Tree: r = min(%.2lf,%.1lf*sigma) if sigma < %.2lf\n",pm.lim,pm.dlt,pm.btn);
   } else fprintf(stderr,"    Fast P:  OFF\n");
-  if(pm.dwn[SOURCE]){
-    if(pm.opt&PW_OPT_1NN) fprintf(stderr,"    Interpolation: 1NN\n");
-    else {
-      if(pm.K)  fprintf(stderr,"    Fast Interpolation:  L = %d\n",pm.K);
-      else      fprintf(stderr,"    Fast Interpolation:  OFF\n");
-    }
+  if(pm.dwn[SOURCE]&&(!(pm.opt&PW_OPT_NONRG))){
+    if(pm.K)  fprintf(stderr,"    Fast Interpolation:  K = %d\n",pm.K);
+    else      fprintf(stderr,"    Fast Interpolation:  OFF\n");
   }
   if(pm.rns&&(pm.J||pm.K)) fprintf(stderr,"    Rand Seed: %d\n",pm.rns);
 
@@ -217,13 +278,11 @@ void printInfo(pwsz sz, pwpm pm){
   fprintf(stderr,"    [%s*.txt]; * =",pm.fn[OUTPUT]);
   if(pm.opt&PW_OPT_SAVEY) fprintf(stderr," y");
   if(pm.opt&PW_OPT_SAVEX) fprintf(stderr,",x");
-  if(pm.opt&PW_OPT_SAVEU) fprintf(stderr,",u");
   if(pm.opt&PW_OPT_SAVEV) fprintf(stderr,",v");
   if(pm.opt&PW_OPT_SAVEA) fprintf(stderr,",a");
   if(pm.opt&PW_OPT_SAVEC) fprintf(stderr,",c");
   if(pm.opt&PW_OPT_SAVEE) fprintf(stderr,",e");
   if(pm.opt&PW_OPT_SAVET) fprintf(stderr,",s,R,t");
   if(pm.opt&PW_OPT_SAVEP) fprintf(stderr,",P");
-  if((pm.opt&PW_OPT_SAVES)&&(pm.opt&PW_OPT_DBIAS)) fprintf(stderr,",Sigma");
   fprintf(stderr,"\n\n");
 }

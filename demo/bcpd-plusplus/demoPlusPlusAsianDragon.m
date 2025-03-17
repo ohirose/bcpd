@@ -26,7 +26,7 @@ system(cmd);
 
 X0=load(x);
 T0=load(y);
-T1=load('output_y.interpolated.txt');
+T1=load('output_y.txt');
 
 % figure 2
 f2=figure('Name','Before/After Registration','NumberTitle','off'); %set(f2,'Position',w1);

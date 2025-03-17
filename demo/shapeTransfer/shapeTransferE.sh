@@ -2,8 +2,8 @@ Y=13;
 X=20;
 pfx1='transferV1'
 pfx2='transferV2'
-fn1=${pfx1}_y.interpolated;
-fn2=${pfx2}_y.interpolated;
+fn1=${pfx1}_y;
+fn2=${pfx2}_y;
 
 STR="$(uname -s)"
 case "${STR}" in

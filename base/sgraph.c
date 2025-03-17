@@ -130,12 +130,12 @@ sgraph* sgraph_from_points(const double *Y, int D, int M, int K, double emax){
 }
 
 sgraph* sgraph_from_mesh(const double *Y, int D, int M, const char *file){
-  sgraph *sg; int j,l,min; double **buff; int **line,nline,nc; char mode;
+  sgraph *sg; int j,l,min; double *buff; int **line,nline,nc;
 
   /* read file */
-  buff=read2d(&nline,&nc,&mode,file,"NA"); if(nc!=2&&nc!=3) goto err01;
-  line=calloc2i(nline,nc); for(l=0;l<nline;l++)for(j=0;j<nc;j++) line[l][j]=(int)buff[l][j];
-  free2d(buff,nline);
+  buff=read2dcm(&nline,&nc,file); if(nc!=2&&nc!=3) goto err01;
+  line=calloc2i(nline,nc); for(l=0;l<nline;l++)for(j=0;j<nc;j++) line[l][j]=(int)buff[j+nc*l];
+  free(buff);
 
   /* check indices */
   min=line[0][0]; for(j=0;j<nc;j++)for(l=0;l<nline;l++){min=line[l][j]<min?line[l][j]:min;}

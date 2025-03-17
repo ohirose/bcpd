@@ -22,8 +22,11 @@
 #include<stdlib.h>
 #include<math.h>
 #include<string.h>
+#include<assert.h>
 
 #define SQ(x) ((x)*(x))
+
+static void copy(double *a, const double *b, int n){ int i; for(i=0;i<n;i++) a[i]=b[i];}
 
 static void mean(double *mu, const double *X, int N, int D){
   int n,d; for(d=0;d<D;d++){mu[d]=0;for(n=0;n<N;n++){mu[d]+=X[d+D*n];} mu[d]/=N;}
@@ -54,27 +57,14 @@ static void norm_l(double *X, const double *mu, double sc, int N, int D, int rev
 }
 
 /* alias */
-void denormlize(double *X, const double *mu, double sc, int N, int D){norm_l(X,mu,sc,N,D,1);}
+void normalize  (double *X, const double *mu, double sc, int N, int D){if(!X){return;} norm_l(X,mu,sc,N,D,0);}
+void denormalize(double *X, const double *mu, double sc, int N, int D){if(!X){return;} norm_l(X,mu,sc,N,D,1);}
 
-void normalize_batch(double *X, double *muX, double *scX, double *Y, double *muY, double *scY, int N, int M, int D, const char type){
-  if(type=='n') return;
+void normalizer(double *muX, double *scX, double *muY, double *scY, const double *X, const double *Y, int N, int M, int D, const char type){
+  if(type=='n'){*scY=*scX=1.0; return;} assert(type=='e'||type=='x'||type=='y');
   mean(muX,X,N,D); *scX=scale(X,muX,N,D);
   mean(muY,Y,M,D); *scY=scale(Y,muY,M,D);
-
-  if(type=='e'){norm_l(X,muX,*scX,N,D,0);norm_l(Y,muY,*scY,M,D,0);}
-  if(type=='x'){norm_l(X,muX,*scX,N,D,0);norm_l(Y,muX,*scX,M,D,0);}
-  if(type=='y'){norm_l(X,muY,*scY,N,D,0);norm_l(Y,muY,*scY,M,D,0);}
-}
-
-void denormalize_batch(double *X, const double *muX, double scX, double *Y, const double *muY, double scY, int N, int M, int D, const char type){
-  int rev=1;
-  if(type=='n') return;
-  if(type=='e'){norm_l(X,muX,scX,N,D,rev);norm_l(Y,muX,scX,M,D,rev);}
-  if(type=='x'){norm_l(X,muX,scX,N,D,rev);norm_l(Y,muX,scX,M,D,rev);}
-  if(type=='y'){norm_l(X,muY,scY,N,D,rev);norm_l(Y,muY,scY,M,D,rev);}
-}
-
-void normalize(double *X, double *mu, double *sc, int N, int D){
-  mean(mu,X,N,D);*sc=scale(X,mu,N,D);norm_l(X,mu,*sc,N,D,0);
+  if(type=='x'){copy(muY,muX,D); *scY=*scX;}
+  if(type=='y'){copy(muX,muY,D); *scX=*scY;}
 }
 

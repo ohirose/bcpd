@@ -27,6 +27,7 @@ double genrand64_real2 (void);
 
 void   shuffle  (int *a, int n){int i,j,t; for(i=n-1;i;i--){j=(int)((i+1)*genrand64_real2()); t=a[i];a[i]=a[j];a[j]=t;}}
 void   randperm (int *a, int n){int i; for(i=0;i<n;i++) a[i]=i; shuffle(a,n);}
+double product  (const double *a, int n){int i; double val=0; for(i=0;i<n;i++){val+=log(a[i]);} return exp(val);}
 
 double volume(const double *x, int D, int N){
   int d,n; double max,min,V=1.0;

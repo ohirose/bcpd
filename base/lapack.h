@@ -4,4 +4,5 @@ int dpotrs_(char *uplo,int *n,int *nrhs,double *A,int *lda,double *B,int *ldb,in
 int dpotrf_(char *uplo,int *n,double *A,int *lda,int *info);
 int dpotri_(char *uplo,int *n,double *A,int *lda,int *info);
 int dgetrf_(int *m,int *n,double *A,int *lda,int *ipiv,int *info);
+int dgesv_ (int *n,int *nrhs,double *A,int *lda,int *ipiv,double *B,int *ldb,int *info);
 

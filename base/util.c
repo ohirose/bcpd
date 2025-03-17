@@ -24,35 +24,6 @@
 #include<assert.h>
 #include"util.h"
 
-#define MAXC  100000
-#define INIT  1024
-#define MAXS  2048
-
-double *** calloc3d (const int L, const int M, const int N){
-  int l;
-  double ***        a    = calloc   (L, sizeof(double**));
-  for (l=0;l<L;l++) a[l] = calloc2d (M, N);
-  return a;
-}
-
-void prepare_sortbox(sortbox *sb, const double * array, const int size){
-  int i; for(i=0;i<size;i++){sb[i].val=array[i];sb[i].idx=i;}
-  return;
-}
-
-int cmp_sortbox_a(const void *a, const void *b){
-  const sortbox *sa = (const sortbox*) a;
-  const sortbox *sb = (const sortbox*) b;
-  return sa->val>sb->val ? 1 : sa->val<sb->val ? -1 : 0;
-}
-
-int cmp_sortbox_d(const void *a, const void *b){
-  const sortbox *sa = (const sortbox*) a;
-  const sortbox *sb = (const sortbox*) b;
-  return sa->val<sb->val ? 1 : sa->val>sb->val ? -1 : 0;
-}
-
-
 double ** calloc2d (const int M, const int N){
   int m;
   double **         a    = calloc (M, sizeof(double*));
@@ -122,102 +93,48 @@ void write2d(const char *file, const double **X, int nr, int nc, const char* fmt
          printf("delimited file nor binary file. Abort.        \n");       exit(EXIT_FAILURE);
 }
 
-double ** read2d(int *nr, int *nc, char *mode, const char *file, const char *na){
-  FILE *fp; char *s,*p,*ext,*dlm=",\t\n"; char *ptr;
-  double *buf=NULL,**X; int m,n,M,N,lim=MAXC; size_t l,sz=INIT;
-  size_t si=sizeof(int),sd=sizeof(double),sc=sizeof(char);
-
-  *mode='?';
-  if(!(ext=strrchr(file,'.'))){goto err00;} ext++;
-  if(strcmp(ext,"bin")==0) *mode='b';
-  if(strcmp(ext,"txt")==0) *mode='t';
-
-  switch(*mode){
-    case 't': /* Tab-delimited file */
-      fp=fopen(file,"r"); if(!fp) goto err01;
-      s  =malloc(sc*lim); /* storage line */
-      buf=malloc(sd*sz);  /* storage data */
-      l=0; /* initialize index */
-      m=0; /* initialize #rows */
-      /* for each line */
-      while(fgets(s,lim,fp)){
-        n=0; /* initialize #cols */
-        m++; /* increment #rows  */
-        if((1+strlen(s))==(size_t)lim) goto err02;
-        /* for each token */
-        for(p=strtok(s,dlm);p;p=strtok(NULL,dlm)){
-          if   (0==strcmp(p,na))  {buf[l]=nan("NaN");}
-          else/*0!=strcmp(p,na))*/{buf[l]=strtod(p,&ptr);if(p==ptr){goto err07;}}
-          l++; /* increment index */
-          n++; /* increment #cols */
-          /* reallocation */
-          if(l==sz){sz*=2;buf=realloc(buf,sd*sz);}
-        } if(m==1) N=n; else if (N!=n) goto err03;
-      } M=m; free(s); fclose(fp);break;
-
-    case 'b': /* Binary file */
-      fp=fopen(file,"rb");if(!fp) {goto err01;}
-      if(1!=fread(&M,si,1,fp))    {goto err04;}
-      if(1!=fread(&N,si,1,fp))    {goto err04;} sz=(size_t)N*M; buf=malloc(sd*sz);
-      if(sz!=fread(buf,sd,sz,fp)) {goto err05;} fclose(fp);break;
-
-    case '?': fp=fopen(file,"rb"); if(!fp) goto err01; else goto err06;
-  } *nr=M;*nc=N; X=calloc2d(M,N);
-  for(m=0;m<M;m++)for(n=0;n<N;n++) X[m][n]=buf[n+N*m];
-  free(buf);
-
-  return X;
-
-  err00: printf("ERROR: Extension of the file '%s' is missing.  \n",    file); exit(EXIT_FAILURE);
-  err01: printf("ERROR: File '%s' Not Found.                    \n",    file); exit(EXIT_FAILURE);
-  err02: printf("ERROR: Number of characters in line %d of '%s' ",    m,file);
-         printf("greater than the limit size. Abort.            \n");          exit(EXIT_FAILURE);
-  err03: printf("ERROR: Number of columns are not identical in    ");
-         printf("line %d of '%s'. Abort.                        \n",  m,file); exit(EXIT_FAILURE);
-  err04: printf("ERROR: File '%s' may be empty. Abort.          \n",    file); exit(EXIT_FAILURE);
-  err05: printf("ERROR: File '%s' may not be a matrix file.     \n",    file); exit(EXIT_FAILURE);
-  err06: printf("ERROR: File '%s' may be neither a tab-delimited ",     file);
-         printf("file nor a binary file. Abort.                 \n");          exit(EXIT_FAILURE);
-  err07: printf("ERROR: Conversion from a string to a numeric "    );
-         printf("value failed in line %d of '%s'. Abort.        \n",  m,file); exit(EXIT_FAILURE);
+int charcount(FILE *fp){
+  int c; int ct=0;
+  fseek(fp,0,SEEK_SET);
+  while(1){c=fgetc(fp); if(c!='\n'&&c!=EOF) ct++; else break;}
+  fseek(fp,0,SEEK_SET);
+  return ct;
 }
 
-void conv2d(const char *file, const char *fmt, const char *na){
-  int nr,nc; double **X; char mode,fout[256],*ext;
-
-  X=read2d(&nr,&nc,&mode,file,na);
-
-  strcpy(fout,file); ext=strrchr(fout,'.');
-  if(mode=='t') strcpy(ext,".bin");
-  if(mode=='b') strcpy(ext,".txt");
-
-  write2d(fout,(const double**)X,nr,nc,fmt,na);
+size_t wordcount(FILE *fp, size_t *linecapa){
+  char *line=malloc(*linecapa*sizeof(char)); double num; size_t len,ct=0;
+  fseek(fp,0,SEEK_SET);
+  getline(&line,linecapa,fp); len=strlen(line);
+  fseek(fp,0,SEEK_SET);
+  while(fscanf(fp,"%lf",&num)){if(ftell(fp)>=len){break;}ct++;}
+  free(line);
+  return ct;
 }
 
-char** read_strings(int *num, const char *file){
-  FILE *fp; char *s,**a; int l,sz,lim=MAXC,max=256;
-  int sc=sizeof(char),ss=sizeof(char*);
+size_t linecount(FILE *fp, size_t *linecapa){
+  char *line=malloc(*linecapa*sizeof(char)); size_t ct=0;
+  fseek(fp,0,SEEK_SET);
+  while(getline(&line,linecapa,fp)>=0){ct++;}
+  fseek(fp,0,SEEK_SET);
+  free(line);
+  return ct;
+}
 
-  fp=fopen(file,"r"); if(!fp) goto err01;
-  s =malloc(sc*lim);  /* storage: string       */
-  a =malloc(ss*max);  /* storage: string array */
-  l=0; /* initialize #lines */
+double *read2dcm(int *nr, int *nc, const char *filename){
+  double *a; int n,r,c,i; int sd=sizeof(double); size_t capa;
+  FILE *fp=fopen(filename,"r"); if(!fp) goto err01;
+  capa=charcount(fp);
+  c=wordcount(fp,&capa);
+  r=linecount(fp,&capa); n=r*c;
+  a=(double*) malloc(n*sd);
 
-  /* for each line */
-  while(fgets(s,lim,fp)){
-    sz=1+strlen(s); if(sz==lim) goto err02;
-    /* skip if the first character is either # or % */
-    if(strchr("#%\n",s[0])){continue;}
-    a[l]=malloc(sc*sz); sscanf(s,"%s",a[l]);
-    /* reallocation: array */
-    if(l==max-1){max*=2;a=realloc(a,sc*max);}
-    l++; /* increment #lines  */
-  } *num=l;free(s);fclose(fp);
+  switch(c){
+    case 2:  for(i=0;i<r;i++) fscanf(fp,"%lf%lf",   a+c*i,a+c*i+1);          break;
+    case 3:  for(i=0;i<r;i++) fscanf(fp,"%lf%lf%lf",a+c*i,a+c*i+1,a+c*i+2);  break;
+    default: for(i=0;i<n;i++) fscanf(fp,"%lf",a+i);
+  } *nr=r; *nc=c; fclose(fp);
 
   return a;
-
-  err01: printf("ERROR: Failed to open: %s\n",                        file);  exit(EXIT_FAILURE);
-  err02: printf("ERROR: Number of characters in line %d of '%s' ",l+1,file);
-         printf("greater than the limit size. Abort.\n"                   );  exit(EXIT_FAILURE);
+  err01: fprintf(stderr,"\n\n  File '%s': Not Found.\n\n",filename); exit(EXIT_FAILURE);
 }
 

@@ -30,7 +30,7 @@ system(cmd);
 
 X0=load(x);
 T0=load(y);
-T1=load('output_y.interpolated.txt');
+T1=load('output_y.txt');
 f =load(fnf); if min(min(f))==0; f=f+1; end;
 
 tag=0;
