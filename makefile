@@ -2,7 +2,7 @@ CC=gcc
 BCPDSRC=  register/*.c base/*.c
 OMP_PORT= -Xpreprocessor -fopenmp -I/opt/local/include/libomp /opt/local/lib/libomp/libomp.dylib
 OMP_BREW_ITL= -Xpreprocessor -fopenmp -I/usr/local/include/ /usr/local/lib/libomp.dylib
-OMP_BREW_ARM= -Xpreprocessor -fopenmp -I/opt/homebrew/include/ /opt/homebrew/lib/libomp.dylib
+OMP_BREW_ARM= -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include/ /opt/homebrew/opt/libomp/lib/libomp.dylib
 DEBUG= -g -Wall
 
 all:
