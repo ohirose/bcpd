@@ -6,6 +6,8 @@ Bayesian Coherent Point Drift (BCPD/GBCPD), and Dependent Landmark Drift (DLD),
 BCPD registers two point clouds, which can be applied to shape analysis, 3D model
 reconstruction, and so forth. DET registers two functions, which can be applied
 to aligning digital images and audio signals. DLD is a method for active shape model fitting.
+All methods can be accelerated using downsampling and displacement field interpolation,
+indicated by '++' after the method’s name, as in BCPD++.
 
 For more information, see
 [Hirose2022](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9918058) (GBCPD/GBCPD++),
@@ -16,6 +18,7 @@ Also, several examples can be watched in
 [[Video 2]](https://youtu.be/pbLVMDj1Zro),
 [[Video 3]](https://youtu.be/cET6gKAvjw0),
 [[Video 4]](https://youtu.be/SoUTbH2tJj8).
+If you have any questions, kindly email ohirose.univ+bcpd(at)gmail.com with your name and affiliation.
 
 ![alt text](https://github.com/ohirose/bcpd/blob/master/img/transfer.jpg?raw=true)
 
