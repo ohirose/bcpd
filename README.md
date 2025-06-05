@@ -126,8 +126,7 @@ The demo scripts of the shape transfer can be executed as follows:
 ### Windows
 
 Ready to go. The compilation is not required. Use the binary file `bcpd.exe` in the `win` directory.
-The binary file was created by GCC included in the 32-bit version of the MinGW system.
-Therefore, it will be quite slower than the one compiled in a Mac/Linux system.
+The binary file was compiled on the MinGW-w64/MSYS2 system.
 
 ### MacOS and Linux
 
