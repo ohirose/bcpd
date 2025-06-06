@@ -101,8 +101,9 @@ The software provides the following demonstrations:
 ### Dataset Preparation
 
 Download the following datasets and move them into the `data` folder in this software:
-- [DET data](https://www.dropbox.com/s/lxhs13sbmo0dwcq/det-demodata-11May2023.zip?dl=1).
-- [DLD data](https://www.dropbox.com/s/y7wkrk2obkzo1w9/dld-demodata09Mar2025.tgz?dl=1).
+- [3D reconstruction data](https://www.dropbox.com/scl/fi/j4ar6wmgixj7eare9yx5e/bcpd-data-3drecov-06Jul2025.zip?rlkey=m1z3r92uibv7d32dzyxyezcu7&dl=1).
+- [DET data](https://www.dropbox.com/scl/fi/b5jhqhde64l2uxmt8yvsa/det-demodata-06Jul2025.zip?rlkey=r0o06lzj8v2ishu5qfubow5zb&dl=1).
+- [DLD data](https://www.dropbox.com/scl/fi/e9fbrxdkos9qej0enwkv1/dld-demodata06Jul2025.zip?rlkey=nu8snqlttc9fdmao8aql8l6r9&dl=1).
 - [GBCPD data](https://www.dropbox.com/s/yssce2kmdil3fqs/gbcpd-demodata20220829.zip?dl=1).
 - [BCPD++ data](https://www.dropbox.com/s/um46xujczko39jk/bcpd-pp-demodata20210226.zip?dl=1).
 - [BCPD data](https://www.dropbox.com/s/6kd4uiyt150uyz9/bcpd-demodata20200127.zip?dl=1)
@@ -126,7 +127,6 @@ The demo scripts of the shape transfer can be executed as follows:
 ### Windows
 
 Ready to go. The compilation is not required. Use the binary file `bcpd.exe` in the `win` directory.
-The binary file was compiled on the MinGW-w64/MSYS2 system.
 
 ### MacOS and Linux
 

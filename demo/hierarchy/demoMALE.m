@@ -1,4 +1,5 @@
 close all; clear;
+addpath('..');
 
 a=2;
 prm{1}.bet='1.2'; prm{1}.tau='0.5'; prm{1}.gma='3.0';

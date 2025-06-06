@@ -2,6 +2,12 @@ clear; close all;
 M=58; D=2; N=40; T=6;
 K=50;
 
+%% Create the 'Model' Directory
+drc='Model';
+if ~exist(drc,'dir')
+  mkdir(drc);
+end
+
 X=zeros(D,M,T,N);
 for n=1:N for t=1:T
   fnm=sprintf('../../../data/%.2d-%dm-opa.txt',n,t);
