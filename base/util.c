@@ -93,7 +93,7 @@ void write2d(const char *file, const double **X, int nr, int nc, const char* fmt
          printf("delimited file nor binary file. Abort.        \n");       exit(EXIT_FAILURE);
 }
 
-int charcount(FILE *fp){
+static int charcount(FILE *fp){
   int c; int ct=0;
   fseek(fp,0,SEEK_SET);
   while(1){c=fgetc(fp); if(c!='\n'&&c!=EOF) ct++; else break;}
@@ -101,31 +101,31 @@ int charcount(FILE *fp){
   return ct;
 }
 
-size_t wordcount(FILE *fp, size_t *linecapa){
-  char *line=malloc(*linecapa*sizeof(char)); double num; size_t len,ct=0;
+static size_t wordcount(FILE *fp, int linecapa){
+  char *line=malloc(linecapa*sizeof(char)); double num; size_t len,ct=0;
   fseek(fp,0,SEEK_SET);
-  getline(&line,linecapa,fp); len=strlen(line);
+  fgets(line,linecapa,fp); len=strlen(line);
   fseek(fp,0,SEEK_SET);
   while(fscanf(fp,"%lf",&num)){if(ftell(fp)>=len){break;}ct++;}
   free(line);
   return ct;
 }
 
-size_t linecount(FILE *fp, size_t *linecapa){
-  char *line=malloc(*linecapa*sizeof(char)); size_t ct=0;
+static size_t linecount(FILE *fp, int linecapa){
+  char *line=malloc(linecapa*sizeof(char)); size_t ct=0;
   fseek(fp,0,SEEK_SET);
-  while(getline(&line,linecapa,fp)>=0){ct++;}
+  while(fgets(line,linecapa,fp)){ct++;}
   fseek(fp,0,SEEK_SET);
   free(line);
   return ct;
 }
 
 double *read2dcm(int *nr, int *nc, const char *filename){
-  double *a; int n,r,c,i; int sd=sizeof(double); size_t capa;
+  double *a; int n,r,c,i; int sd=sizeof(double); int capa,min=20000;
   FILE *fp=fopen(filename,"r"); if(!fp) goto err01;
-  capa=charcount(fp);
-  c=wordcount(fp,&capa);
-  r=linecount(fp,&capa); n=r*c;
+  capa=4*charcount(fp); capa=capa<min?min:capa;
+  c=wordcount(fp,capa);
+  r=linecount(fp,capa); n=r*c;
   a=(double*) malloc(n*sd);
 
   switch(c){
@@ -137,4 +137,6 @@ double *read2dcm(int *nr, int *nc, const char *filename){
   return a;
   err01: fprintf(stderr,"\n\n  File '%s': Not Found.\n\n",filename); exit(EXIT_FAILURE);
 }
+
+
 

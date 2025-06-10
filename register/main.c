@@ -328,7 +328,7 @@ double tvcalc(const struct timeval *end, const struct timeval *beg){
 
 void fprint_comptime(FILE *fp, const struct timeval *tv, double *tt, int nx, int ny, int geok){
   if(fp==stderr) fprintf(fp,"  Computing Time:\n");
-  #ifdef MINGW32
+  #ifdef MINGW64
   if(geok)   fprintf(fp,"    FPSA algorithm:  %.3lf s\n", tvcalc(tv+2,tv+1));
   if(nx||ny) fprintf(fp,"    Downsampling:    %.3lf s\n", tvcalc(tv+3,tv+2));
   fprintf(fp,"    VB Optimization: %.3lf s\n",            tvcalc(tv+4,tv+3));
@@ -525,7 +525,7 @@ int main(int argc, char **argv){
   /* save computing time for each loop */
   if(pm.opt&PW_OPT_PFLOG){
     strcpy(fn,pm.fn[OUTPUT]); strcat(fn,"profile_time.txt"); fp=fopen(fn,"w");
-    #ifdef MINGW32
+    #ifdef MINGW64
     for(l=0;l<lp;l++){fprintf(fp,"%f\n",pf[l]);}
     #else
     for(l=0;l<lp;l++){fprintf(fp,"%f\t%f\n",pf[l],pf[l+pm.nlp]);}

@@ -134,7 +134,7 @@ sgraph* sgraph_from_mesh(const double *Y, int D, int M, const char *file){
 
   /* read file */
   buff=read2dcm(&nline,&nc,file); if(nc!=2&&nc!=3) goto err01;
-  line=calloc2i(nline,nc); for(l=0;l<nline;l++)for(j=0;j<nc;j++) line[l][j]=(int)buff[j+nc*l];
+  line=calloc2i(nline,nc); for(l=0;l<nline;l++)for(j=0;j<nc;j++) line[l][j]=round(buff[j+nc*l]);
   free(buff);
 
   /* check indices */
