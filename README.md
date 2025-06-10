@@ -102,7 +102,7 @@ The software provides the following demonstrations:
 
 Download the following datasets and move them into the `data` folder in this software:
 - [3D reconstruction data](https://www.dropbox.com/scl/fi/j4ar6wmgixj7eare9yx5e/bcpd-data-3drecov-06Jul2025.zip?rlkey=m1z3r92uibv7d32dzyxyezcu7&dl=1).
-- [DET data](https://www.dropbox.com/scl/fi/b5jhqhde64l2uxmt8yvsa/det-demodata-06Jul2025.zip?rlkey=r0o06lzj8v2ishu5qfubow5zb&dl=1).
+- [DET data](https://www.dropbox.com/scl/fi/pqndryktjwzjxqmq9tcz5/det-demodata-10Jul2025.zip?rlkey=1kinhx9w06qwg21mulyv6cmc3&dl=1).
 - [DLD data](https://www.dropbox.com/scl/fi/e9fbrxdkos9qej0enwkv1/dld-demodata06Jul2025.zip?rlkey=nu8snqlttc9fdmao8aql8l6r9&dl=1).
 - [GBCPD data](https://www.dropbox.com/s/yssce2kmdil3fqs/gbcpd-demodata20220829.zip?dl=1).
 - [BCPD++ data](https://www.dropbox.com/s/um46xujczko39jk/bcpd-pp-demodata20210226.zip?dl=1).
