@@ -133,7 +133,7 @@ Ready to go. The compilation is not required. Use the binary file `bcpd.exe` in 
 ### macOS
 
 1. Install Xcode, Xcode command line tools, Homebrew.
-2  Install OpenMP and OpenBLAS using Homebrew.
+2. Install OpenMP and OpenBLAS using Homebrew.
 3. Download and decompress the zip file containing bcpd source codes.
 4. Move into the top directory of the uncompressed folder using the terminal window.
 5. Type `make`.
