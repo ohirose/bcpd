@@ -124,21 +124,26 @@ The demo scripts of the shape transfer can be executed as follows:
 
 ## Compilation
 
+Please contact the author if the compilation fails.
+
 ### Windows
 
 Ready to go. The compilation is not required. Use the binary file `bcpd.exe` in the `win` directory.
 
-### MacOS and Linux
+### macOS
 
-1. Install OpenMP and the LAPACK library if not installed. If your machine is a Mac, install Xcode, Xcode command-line tools,
-   and MacPorts (or Homebrew).
-2. Download and decompress the zip file that includes source codes.
+1. Install Xcode, Xcode command line tools, Homebrew.
+2  Install OpenMP and OpenBLAS using Homebrew.
+3. Download and decompress the zip file containing bcpd source codes.
+4. Move into the top directory of the uncompressed folder using the terminal window.
+5. Type `make`.
+
+### Linux
+
+1. Install OpenMP and OpenBLAS.
+2. Download and decompress the zip file containing bcpd source codes.
 3. Move into the top directory of the uncompressed folder using the terminal window.
-4. Type `make OPT=-DUSE_OPENMP ENV=<your-environment>`; replace `<your-environment>` with `LINUX`,
-   `HOMEBREW`, `HOMEBREW_INTEL`, or `MACPORTS`. Type `make OPT=-DNUSE_OPENMP` when disabling OpenMP.
-
-Homebrew's default installation path changes according to Mac's CPU type.
-If you use an Intel Mac, specify `HOMEBREW_INTEL` instead of `HOMEBREW`.
+4. Type `make`.
 
 ## Usage
 

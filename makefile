@@ -1,28 +1,41 @@
-CC=gcc
-BCPDSRC=  register/*.c base/*.c
-OMP_PORT= -Xpreprocessor -fopenmp -I/opt/local/include/libomp /opt/local/lib/libomp/libomp.dylib
-OMP_BREW_ITL= -Xpreprocessor -fopenmp -I/usr/local/include/ /usr/local/lib/libomp.dylib
-OMP_BREW_ARM= -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include/ /opt/homebrew/opt/libomp/lib/libomp.dylib
-DEBUG= -g -Wall
+BCPDSRC :=  register/*.c base/*.c
+OUTDIR := .
 
-all:
-ifeq ($(OPT),-DUSE_OPENMP)
-  ifeq ($(ENV),LINUX)
-	$(CC) -O3 -fopenmp $(OPT) $(DEBUG) $(BCPDSRC) -o bcpd -lm -llapack
-  else ifeq ($(ENV),MINGW32)
-	$(CC) -O3 $(OPT) $(BCPDSRC) -L./win -lpthreadGC-3 win/*.dll -o win/bcpd -DMINGW32
-  else ifeq ($(ENV),HOMEBREW_INTEL)
-	clang -O3 $(OPT) $(OMP_BREW_ITL) $(DEBUG) $(BCPDSRC) -o bcpd -lm -llapack -Wuninitialized
-  else ifeq ($(ENV),HOMEBREW)
-	clang -O3 $(OPT) $(OMP_BREW_ARM) $(DEBUG) $(BCPDSRC) -o bcpd -lm -llapack -Wuninitialized
-  else ifeq ($(ENV),MACPORTS)
-	clang -O3 $(OPT) $(OMP_PORT) $(DEBUG) $(BCPDSRC) -o bcpd -lm -llapack -Wuninitialized
-  endif
+# Detect platform
+UNAME_S := $(shell uname -s)
+
+# Platform-specific settings
+ifeq ($(UNAME_S),Darwin)
+    CC := clang
+    CFLAGS += -Xpreprocessor -fopenmp
+    LDFLAGS += -lomp -lopenblas
+
+    # Detect Homebrew or MacPorts
+    OMP_PREFIX := $(shell brew --prefix libomp 2>/dev/null)
+    BLAS_PREFIX := $(shell brew --prefix openblas 2>/dev/null)
+
+    ifeq ($(OMP_PREFIX),)
+        OMP_PREFIX := /opt/local
+    endif
+    CFLAGS += -I$(OMP_PREFIX)/include -I$(BLAS_PREFIX)/include
+    LDFLAGS += -L$(OMP_PREFIX)/lib -L$(BLAS_PREFIX)/lib
+
+else ifeq ($(findstring MINGW,$(UNAME_S)),MINGW)
+    # MinGW-w64 on Windows (e.g., MSYS2)
+    CC := x86_64-w64-mingw32-gcc
+    CFLAGS += -fopenmp -DMINGW64
+    LDFLAGS += -lopenblas -static
+    OUTDIR := ./win
 else
-  ifeq ($(OPT),-DNUSE_OPENMP)
-	$(CC) -O3 $(DEBUG) $(BCPDSRC) -o bcpd -lm -llapack
-  else ## default ##
-	clang -O3 -DUSE_OPENMP $(OMP_BREW_ARM) $(DEBUG) $(BCPDSRC) -o bcpd -lm -llapack
-  endif
+    # Assume Linux
+    CC := gcc
+    CFLAGS += -fopenmp
+    LDFLAGS += -lopenblas
 endif
 
+# Allow user to override CC, CFLAGS, LDFLAGS
+CC ?= $(CC)
+
+# Compilation
+all:
+	$(CC) -O3 $(CFLAGS) -DUSE_OPENMP $(BCPDSRC) $(LDFLAGS) -o $(OUTDIR)/bcpd
