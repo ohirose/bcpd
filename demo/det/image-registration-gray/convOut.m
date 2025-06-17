@@ -30,7 +30,7 @@ function convOut(level)
   end
   
   if exist('medfilt2', 'file') == 2
-    output = medfilt2(ft, [5 5]);  % Use toolbox version
+    ft = medfilt2(ft, [5 5]);  % Use toolbox version
   else
     error('Image procesing toolbox is missing. Abort');
   end
