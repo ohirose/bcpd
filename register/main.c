@@ -95,9 +95,10 @@ void save_corresp(
     if(fpe){fprintf(fpe,"%d\t%d\t%lf\n",n+1,mmax?mmax:l[0],mmax?max:p[0]);}
     if(fpc){fprintf(fpc,"%d\t%d\n",n+1,mmax?1:0);}
   }
-  if(fpP){fclose(fpP);} free(l); free(bd);
-  if(fpe){fclose(fpc);} free(p); free(bi);
-  if(fpc){fclose(fpe);} free(T);
+  if (fpP) fclose(fpP);
+  if (fpe) fclose(fpe);
+  if (fpc) fclose(fpc);
+  free(l); free(bd); free(p); free(bi); free(T);
   return;
 }
 
