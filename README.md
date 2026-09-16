@@ -1,39 +1,40 @@
-
 # Bayesian Coherent Point Drift / Domain Elastic Transform
 
 ## NEWS
-- Mar 22 2026 We uploaded our paper proposing Domain Elastic Transform to [arXiv](https://arxiv.org/html/2603.21235v1).
-- Mar 18 2025 We initiated distributing Domain Elastic Transform Code [initial commit](https://github.com/ohirose/bcpd/tree/616b4c5e4e28ac598bcf770a9b231d55a97c2e71)
+- Sep 2026 Our paper on Domain Elastic Transform (DET) was published in [IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI)](https://doi.org/10.1109/TPAMI.2026.3733393).
+- Mar 22 2026 We uploaded our paper proposing Domain Elastic Transform to [arXiv](https://arxiv.org/abs/2603.21235).
+- Mar 18 2025 We initiated distributing Domain Elastic Transform code [initial commit](https://github.com/ohirose/bcpd/tree/616b4c5e4e28ac598bcf770a9b231d55a97c2e71).
 
 This repository provides a software suite implementing Domain Elastic Transform (DET),
-Bayesian Coherent Point Drift (BCPD/GBCPD), and Dependent Landmark Drift (DLD),
-BCPD registers two point clouds, which can be applied to shape analysis, 3D model
-reconstruction, and so forth. DET registers two functions, which can be applied
-to aligning spatial transcriptomics data, digital images, and audio signals. DLD is a method for active shape model fitting.
+Bayesian Coherent Point Drift (BCPD/GBCPD), and Dependent Landmark Drift (DLD).
+BCPD registers two point clouds and can be applied to shape analysis, 3D model
+reconstruction, and related problems. DET registers functions defined on irregular
+domains and can be applied to spatial transcriptomics data, digital images, and audio
+signals. DLD is a method for active shape model fitting.
 All methods can be accelerated using downsampling and displacement field interpolation,
-indicated by '++' after the method’s name, as in BCPD++.
-Below is a demonstration of DET, applied to a spatial transcriptomics dataset:
+indicated by '++' after the method's name, as in BCPD++.
+Below is a demonstration of DET applied to a spatial transcriptomics dataset:
 
 ![FIG:DET-MOSTA](https://github.com/ohirose/bcpd/blob/master/img/fig-det-mosta.png?raw=true)
 
 For more information, see
-[Hirose2026](https://arxiv.org/pdf/2603.21235) (DET),
+[Hirose2026](https://doi.org/10.1109/TPAMI.2026.3733393) (DET; [arXiv](https://arxiv.org/abs/2603.21235)),
 [Hirose2022](https://www.computer.org/csdl/journal/tp/2023/05/09918058/1HrevA5D8qY) (GBCPD/GBCPD++),
-[Hirose2020a](https://www.computer.org/csdl/journal/tp/2021/07/08985307/1hcyC0ghzz2) (BCPD), and
-[Hirose2020b](https://www.computer.org/csdl/journal/tp/2021/08/09290402/1prKIrOP53a) (BCPD++).
+[Hirose2020a](https://www.computer.org/csdl/journal/tp/2021/07/08985307/1hcyC0ghzz2) (BCPD),
+[Hirose2020b](https://www.computer.org/csdl/journal/tp/2021/08/09290402/1prKIrOP53a) (BCPD++), and
 [Hirose2017](https://arxiv.org/abs/1711.06588) (DLD).
 Also, several examples can be watched in
 [[Video 1]](https://youtu.be/OT97b60iBmQ),
 [[Video 2]](https://youtu.be/pbLVMDj1Zro),
 [[Video 3]](https://youtu.be/cET6gKAvjw0),
-[[Video 4]](https://youtu.be/SoUTbH2tJj8).
+[[Video 4]](https://youtu.be/SoUTbH2tJj8), and
 [[Video 5]](https://www.youtube.com/watch?v=3sDNes4n_RY).
 If you have any questions, kindly email ohirose.univ+bcpd(at)gmail.com with your name and affiliation.
 
 ## Table of Contents
 
 1. [Algorithm Overviews](#algorithm-overviews)
-2. [References](#references)
+2. [Citation](#citation)
 3. [Performance](#performance)
     + [GBCPD vs CPD](#gbcpd-vs-cpd)
     + [BCPD vs CPD](#bcpd-vs-cpd)
@@ -65,13 +66,18 @@ If you have any questions, kindly email ohirose.univ+bcpd(at)gmail.com with your
 ## Algorithm Overviews
 
 ### Domain Elastic Transform (DET)
-[[Paper]](https://arxiv.org/pdf/2603.21235)
-DET is a grid-free probabilistic framework that unifies geometric and functional alignment. By treating data as functions
-on irregular domains, it registers high-dimensional signals directly without requiring lossy voxelization or binning.
-The algorithm formulates the registration problem within a rigorous Bayesian framework, modeling domain deformation as
-an elastic motion guided by a joint spatial-functional likelihood. This makes it highly effective for emerging
-scientific data, such as spatial transcriptomics, where high-dimensional vector-valued functions are defined on sparse
-point sets.
+[[Paper]](https://doi.org/10.1109/TPAMI.2026.3733393)
+[[arXiv]](https://arxiv.org/abs/2603.21235)
+
+DET is a grid-free probabilistic framework for function registration that combines
+geometric and functional alignment. By treating data as functions on irregular domains,
+it registers high-dimensional signals directly without requiring voxelization or binning.
+DET formulates registration within a generalized Bayesian framework, modeling domain
+deformation as an elastic motion guided by a joint spatial-functional likelihood. The
+method is fully unsupervised and scalable through registration on sampled points followed
+by displacement interpolation. It is particularly suited to scientific data such as
+spatial transcriptomics, where high-dimensional vector-valued functions are observed on
+sparse, irregular domains.
 
 ![FIG:DET](https://github.com/ohirose/bcpd/blob/master/img/fig-det-gmdl.png?raw=true)
 
@@ -101,7 +107,7 @@ knowledge.
 
 ### Accelerated Variants (The "++" Framework)
 [[Paper]](https://www.computer.org/csdl/journal/tp/2021/08/09290402/1prKIrOP53a)
-To handle massive datasets—scaling up to millions of points on standard hardware—all of the core algorithms can be
+To handle massive datasets - scaling up to millions of points on standard hardware - all of the core algorithms can be
 run in a highly optimized accelerated mode, denoted by the "++" suffix (e.g., DET++, BCPD++, G-BCPD++, DLD++). This
 framework drastically reduces computational and memory bottlenecks by employing a combination of mathematical
 approximations and spatial search techniques:
@@ -111,31 +117,120 @@ streamlined three-step process. First, the input functions or point clouds are d
 representative landmarks. Second, the core registration algorithm is applied to this reduced set. Finally, the
 resulting domain displacement vectors are interpolated back to the original, full-resolution data.
 
-* **Low-Rank Approximation & Fast Search:** The acceleration pipeline utilizes the Nyström method for low-rank
+* **Low-Rank Approximation & Fast Search:** The acceleration pipeline utilizes the Nystrom method for low-rank
 matrix approximation during the early optimization stages. As the alignment refines and the matching probability
 matrix becomes sparser, the system transitions to a k-d tree search to efficiently evaluate and prune
 low-probability point correspondences.
 
 ![FIG:BCPD++](https://github.com/ohirose/bcpd/blob/master/img/lucy.png?raw=true)
 
-## References
+## Citation
 
-The details of the algorithms are available in the following papers:
-- [DET] O. Hirose and E. Rodolà,
-  "[Domain Elastic Transform: Bayesian Function Registration for High-Dimensional Scientific Data](https://arxiv.org/pdf/2603.21235)," Mar 2026.
-- [GBCPD/GBCPD++] O. Hirose,
-  "[Geodesic-Based Bayesian Coherent Point Drift](https://www.computer.org/csdl/journal/tp/2023/05/09918058/1HrevA5D8qY),"
-  [IEEE TPAMI](https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=34), Oct 2022.
-- [BCPD++] O. Hirose,
-  "[Acceleration of non-rigid point set registration with downsampling and Gaussian process regression](https://www.computer.org/csdl/journal/tp/2021/08/09290402/1prKIrOP53a),"
-  [IEEE TPAMI](https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=34), Dec 2020.
-- [BCPD] O. Hirose,
-  "[A Bayesian formulation of coherent point drift](https://www.computer.org/csdl/journal/tp/2021/07/08985307/1hcyC0ghzz2),"
-  [IEEE TPAMI](https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=34), Feb 2020.
-  - The article's [supplementary document](https://www.dropbox.com/s/pkgw2xxd0f3anfk/bcpd-appendix.pdf?dl=1)
-    contains proofs of propositions.
-  - Fig. 15 in the print version was accidentally replaced by Fig. 3 during the publication process after the review process. See an [erratum](https://ieeexplore.ieee.org/document/9506964) correcting the error.
-  - In Fig. 2, following Proposition 3, please replace ![trace-before](https://github.com/ohirose/bcpd/blob/master/img/trace-before.png?raw=true) with ![trace-after](https://github.com/ohirose/bcpd/blob/master/img/trace-after.png?raw=true) as follows:
+If you use this software in your research, please cite the paper corresponding to the algorithm you use.
+
+### Domain Elastic Transform (DET)
+
+O. Hirose and E. Rodol&agrave;,
+"[Domain Elastic Transform: Bayesian Function Registration for High-Dimensional Scientific Data](https://doi.org/10.1109/TPAMI.2026.3733393),"
+*IEEE Transactions on Pattern Analysis and Machine Intelligence*, 2026.
+[[arXiv]](https://arxiv.org/abs/2603.21235)
+
+<details>
+<summary>BibTeX</summary>
+
+```bibtex
+@article{hirose2026det,
+  author  = {Hirose, Osamu and Rodol{\`a}, Emanuele},
+  title   = {Domain Elastic Transform: Bayesian Function Registration for High-Dimensional Scientific Data},
+  journal = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  year    = {2026},
+  doi     = {10.1109/TPAMI.2026.3733393}
+}
+```
+
+</details>
+
+### Geodesic-Based Bayesian Coherent Point Drift (GBCPD)
+
+O. Hirose,
+"[Geodesic-Based Bayesian Coherent Point Drift](https://doi.org/10.1109/TPAMI.2022.3214191),"
+*IEEE Transactions on Pattern Analysis and Machine Intelligence*, vol. 45, no. 5,
+pp. 5816-5832, 2023.
+
+<details>
+<summary>BibTeX</summary>
+
+```bibtex
+@article{hirose2023gbcpd,
+  author  = {Hirose, Osamu},
+  title   = {Geodesic-Based Bayesian Coherent Point Drift},
+  journal = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume  = {45},
+  number  = {5},
+  pages   = {5816--5832},
+  year    = {2023},
+  doi     = {10.1109/TPAMI.2022.3214191}
+}
+```
+
+</details>
+
+### BCPD++
+
+O. Hirose,
+"[Acceleration of Non-Rigid Point Set Registration With Downsampling and Gaussian Process Regression](https://doi.org/10.1109/TPAMI.2020.3043769),"
+*IEEE Transactions on Pattern Analysis and Machine Intelligence*, vol. 43, no. 8,
+pp. 2858-2865, 2021.
+
+<details>
+<summary>BibTeX</summary>
+
+```bibtex
+@article{hirose2021bcpdpp,
+  author  = {Hirose, Osamu},
+  title   = {Acceleration of Non-Rigid Point Set Registration With Downsampling and Gaussian Process Regression},
+  journal = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume  = {43},
+  number  = {8},
+  pages   = {2858--2865},
+  year    = {2021},
+  doi     = {10.1109/TPAMI.2020.3043769}
+}
+```
+
+</details>
+
+### Bayesian Coherent Point Drift (BCPD)
+
+O. Hirose,
+"[A Bayesian Formulation of Coherent Point Drift](https://doi.org/10.1109/TPAMI.2020.2971687),"
+*IEEE Transactions on Pattern Analysis and Machine Intelligence*, vol. 43, no. 7,
+pp. 2269-2286, 2021.
+
+<details>
+<summary>BibTeX</summary>
+
+```bibtex
+@article{hirose2021bcpd,
+  author  = {Hirose, Osamu},
+  title   = {A Bayesian Formulation of Coherent Point Drift},
+  journal = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume  = {43},
+  number  = {7},
+  pages   = {2269--2286},
+  year    = {2021},
+  doi     = {10.1109/TPAMI.2020.2971687}
+}
+```
+
+</details>
+
+#### Notes
+
+- The article's [supplementary document](https://www.dropbox.com/s/pkgw2xxd0f3anfk/bcpd-appendix.pdf?dl=1)
+  contains proofs of propositions.
+- Fig. 15 in the print version was accidentally replaced by Fig. 3 during the publication process after the review process. See an [erratum](https://ieeexplore.ieee.org/document/9506964) correcting the error.
+- In Fig. 2, following Proposition 3, please replace ![trace-before](https://github.com/ohirose/bcpd/blob/master/img/trace-before.png?raw=true) with ![trace-after](https://github.com/ohirose/bcpd/blob/master/img/trace-after.png?raw=true) as follows:
 
 <img src="https://github.com/ohirose/bcpd/blob/master/img/correction.png" alt="correction" width="600"/>
 
@@ -174,7 +269,7 @@ Download the following datasets and move them into the `data` folder in this sof
 - [DLD data](https://www.dropbox.com/scl/fi/e9fbrxdkos9qej0enwkv1/dld-demodata06Jul2025.zip?rlkey=nu8snqlttc9fdmao8aql8l6r9&dl=1).
 - [GBCPD data](https://www.dropbox.com/s/yssce2kmdil3fqs/gbcpd-demodata20220829.zip?dl=1).
 - [BCPD++ data](https://www.dropbox.com/s/um46xujczko39jk/bcpd-pp-demodata20210226.zip?dl=1).
-- [BCPD data](https://www.dropbox.com/s/6kd4uiyt150uyz9/bcpd-demodata20200127.zip?dl=1)
+- [BCPD data](https://www.dropbox.com/s/6kd4uiyt150uyz/bcpd-demodata20200127.zip?dl=1)
 
 ### Demo Script Execution:
 
@@ -441,4 +536,3 @@ The trajectory can be viewed using scripts: `optpath.m` for 2D data and
 `optpath3.m` for 3D data. Saving a trajectory is memory-inefficient. Disable it if both N and M
 are more than several hundreds of thousands. If `P` is specified as an argument of `-s`,
 nonzero elements of matching probability P will be output.
-
