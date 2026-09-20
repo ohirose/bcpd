@@ -41,10 +41,12 @@ If you have any questions, kindly email ohirose.univ+bcpd(at)gmail.com with your
     + [BCPD vs BCPD++](#bcpd-vs-bcpd)
 4. [Demo](#demo)
     + [Dataset preparation](#dataset-preparation)
-    + [Demo script execution](#demo-script-execution)
+    + [Python demo script execution](#python-demo-script-execution)
+    + [MATLAB demo script execution](#matlab-demo-script-execution)
 5. [Compilation](#compilation)
     + [Windows](#windows)
-    + [MacOS and Linux](#macos-and-linux)
+    + [macOS](#macos)
+    + [Linux](#linux)
 6. [Usage](#usage)
     + [Terms and symbols](#terms-and-symbols)
     + [Algorithms](#algorithms)
@@ -59,8 +61,8 @@ If you have any questions, kindly email ohirose.univ+bcpd(at)gmail.com with your
 8. [Options](#options)
     + [Convergence](#convergence)
     + [Normalization](#normalization)
-    + [File output](#file-output)
     + [Terminal output](#terminal-output)
+    + [File output](#file-output)
 
 
 ## Algorithm Overviews
@@ -264,26 +266,50 @@ The software provides the following demonstrations:
 ### Dataset Preparation
 
 Download the following datasets and move them into the `data` folder in this software:
-- [3D reconstruction data](https://www.dropbox.com/scl/fi/j4ar6wmgixj7eare9yx5e/bcpd-data-3drecov-06Jul2025.zip?rlkey=m1z3r92uibv7d32dzyxyezcu7&dl=1).
-- [DET data](https://www.dropbox.com/scl/fi/pqndryktjwzjxqmq9tcz5/det-demodata-10Jul2025.zip?rlkey=1kinhx9w06qwg21mulyv6cmc3&dl=1).
+- [DET data](https://www.dropbox.com/scl/fi/phaul0lh9afn3qp1xsmlm/det-demodata20Sep2026.zip?rlkey=13eno1fhtlnbrekgeacu4mpnl&dl=1).
 - [DLD data](https://www.dropbox.com/scl/fi/e9fbrxdkos9qej0enwkv1/dld-demodata06Jul2025.zip?rlkey=nu8snqlttc9fdmao8aql8l6r9&dl=1).
 - [GBCPD data](https://www.dropbox.com/s/yssce2kmdil3fqs/gbcpd-demodata20220829.zip?dl=1).
 - [BCPD++ data](https://www.dropbox.com/s/um46xujczko39jk/bcpd-pp-demodata20210226.zip?dl=1).
-- [BCPD data](https://www.dropbox.com/s/6kd4uiyt150uyz/bcpd-demodata20200127.zip?dl=1)
+- [BCPD data](https://www.dropbox.com/s/6kd4uiyt150uyz9/bcpd-demodata20200127.zip?dl=1).
+- [3D reconstruction data](https://www.dropbox.com/scl/fi/j4ar6wmgixj7eare9yx5e/bcpd-data-3drecov-06Jul2025.zip?rlkey=m1z3r92uibv7d32dzyxyezcu7&dl=1).
 
-### Demo Script Execution:
+### Python Demo Script Execution
+
+Build BCPD, install the Python dependencies, and run the demos from the
+repository root:
+
+```sh
+make
+python -m pip install -r demo-python/requirements.txt
+python demo-python/bcpd/nonrigid.py bunny-a
+python demo-python/bcpd/gbcpd.py face-1
+python demo-python/det/image.py color
+python demo-python/det/merfish.py
+python demo-python/det/mosta.py
+```
+
+See [demo-python/README.md](demo-python/README.md) for all available demos and
+presets. Shape-transfer results are saved under
+`demo-python/output/shape-transfer/PRESET`.
+
+The MERFISH demo registers the anterior, middle, and posterior slice pairs
+shown in the DET study, fitting PCA independently to each pair. The MOSTA demo
+reproduces the DET-only E14.5-to-E15.5 experiment using a shared 50-component
+PCA representation. All required inputs are provided by the DET data archive.
+
+### MATLAB Demo Script Execution
 
 All demo scripts except for the shape transfer can be executed as follows:
 
-1. Start MATLAB and move into a foloder including demo scripts, e.g., `demo/bcpd-3drecov`.
+1. Start MATLAB and move into a folder containing demo scripts, e.g., `demo-matlab/bcpd-3drecov`.
 2. Double-click a demo script, e.g., `demoRecovChef.m`.
 3. Press the run button in the code editor of MATLAB.
 
 The demo scripts of the shape transfer can be executed as follows:
 
-1. Go to the `demo/shapeTransfer` folder using your terminal window.
+1. Go to the `demo-matlab/shapeTransfer` folder using your terminal window.
 2. Run a bash script, e.g., type `./shapeTransferA.sh` in the terminal.
-3. Check output files named `transferV[1/2]_y.interpolated.obj`.
+3. Check output files named `transferV1_y.obj` and `transferV2_y.obj`.
 
 ## Compilation
 
@@ -312,7 +338,7 @@ Ready to go. The compilation is not required. Use the binary file `bcpd.exe` in 
 
 Brief instructions are printed by typing `./bcpd -v` (or `bcpd -v` for windows) in the terminal window.
 The binary file can also be executed using the `system` function in MATLAB.
-See MATLAB scripts in the `demo` folder regarding the usage of the binary file.
+See MATLAB scripts in the `demo-matlab` folder regarding the usage of the binary file.
 
 ### Terms and symbols
 

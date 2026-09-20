@@ -1,0 +1,6 @@
+numpy
+matplotlib
+open3d==0.20.0
+Pillow
+scipy
+scikit-learn
