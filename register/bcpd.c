@@ -73,7 +73,7 @@ static void print_status(int lp, double Np, double sigma, double *pi, double dif
 
 static void lowrank_encode(
   double         *B,
-  double         *wd, /* size: MD+2KK+(D)MK (DMK if ssm) */
+  double         *wd, /* size: KK+(D)MK (DMK if ssm) */
   const double   *E,
   const double   *w,
   const double   *s,
@@ -87,13 +87,13 @@ static void lowrank_encode(
   int             ssm
   ){
 
-  int d,i,j,k,m; double *A,*C,*W; char uplo='U'; int D0=D;
+  int d,i,j,k,m; double *A,*C; char uplo='U'; int D0=D;
   int info; double val,cc; int sd=0;
 
   if(ssm){M=D*M;D=1;} /* ssm order: xyzxyz */
 
   /* allocation */
-  W=wd+sd;sd+=D*M; C=wd+sd;sd+=M*K;
+  C=wd+sd;sd+=M*K;
   A=wd+sd;sd+=K*K;
 
   cc=lmd*SQ(*r/(*s));
@@ -104,10 +104,6 @@ static void lowrank_encode(
   for(k=0;k<K;k++) A[k+K*k]+=cc/L[k];
   dpotrf_(&uplo,&K,A,&K,&info);         if(info!=0){goto err02;}
   dpotrs_(&uplo,&K,&D,A,&K,B,&K,&info); if(info!=0){goto err03;}
-  for(m=0;m<M;m++)for(d=0;d<D;d++) W[m+M*d]=w[ssm?(m/D0):m]*E[d+D*m];
-  for(m=0;m<M;m++)for(d=0;d<D;d++)for(k=0;k<K;k++) W[m+M*d]-=C[m+M*k]*B[k+K*d];
-  for(m=0;m<M;m++)for(d=0;d<D;d++) W[m+M*d]/=cc;
-  for(k=0;k<K;k++)for(d=0;d<D;d++){val=0;for(m=0;m<M;m++){val+=Q[m+M*k]*W[m+M*d];} B[k+K*d]=val*L[k];}
 
   return;
   err02: printf("ERROR: The Cholesky factorization of A failed at the update of v. Retry.\n");     exit(EXIT_FAILURE);
@@ -165,7 +161,7 @@ int bcpd(
   const double  *   Y,    /*  I  | DM x 1        | source point set         */
   const double  *   fx,   /*  I  |  N x 1        | function value of x      */
   const double  *   fy,   /*  I  |  M x 1        | function value of y      */
-  const double  *   LQ,   /*  I  | K + M x K     | geodesic/ssm only        */
+  const double  *   LQ,   /*  I  | K + (D) M x K | geodesic/ssm only        */
   const pwsz        sz,   /*  I  |               | D, Df, M, N, K, J,       */
   const pwpm        pm    /*  I  |               | tuning parameters        */
   ){
@@ -174,11 +170,11 @@ int bcpd(
   double *pout,*c/*N*/,*mf,*vf,*hf/*Df*/,*B/*KD*/,*E/*MD*/,*Q/*MK*/,*L/*K*/,*G/*MM*/,*G1/*MM*/,*G2/*MM*/;
   double *b/*M*/,*q/*N*/,*f/*N*/,*PX/*DM*/,*sx/*D*M*nlp*/,*sy/*D*M*nlp*/,*ix/*DM*/,*lw/*DD*/;
   double *xb/*D*/,*ub/*D*/,*phi/*DD*/,*psi/*DD*/,*Sxu/*DD*/,*dS/*D*/,*wk/*10D*/; struct timeval tick;
-  double *wld,*wdd/*K(K+11)*/,*wgd/*M+N+J+JJ*/; int *Tx,*Ty/*1+3N*/,*wdi/*M*/,*wgi/*M+N*/,*id/*M+N*/; double bet;
+  double *wld,*wdd/*K(K+11)*/,*wgd/*M+N+J+JJ*/; int *Tx,*Ty/*1+3N*/,*wdi/*M*/,*wgi/*M+N*/,*id=NULL/*M+N*/; double bet;
   int d,i,j,m,n,lp,D,Df,K,M,N,J; int *ipiv,info,lwork1; char jobz='V',uplo='U'; double tr=0; int max;
   double omg,lmd,kpa,cnv; int nlp,opt; int sd=0,si=0; int T=pm.opt&PW_OPT_LOCAL,db=pm.opt&PW_OPT_DBIAS;
   double clc,cps=CLOCKS_PER_SEC,*treal=pf,*tcpu=pf+pm.nlp,*rprog=pf+2*pm.nlp; int pflog=pm.opt&PW_OPT_PFLOG;
-  double *Pfx; int ssm=strlen(pm.fn[COV_LQ]); int type=(pm.opt&PW_OPT_AFFIN)?'a':'s'; double det,zeta,eb;
+  double *Pfx; int ssm=(pm.opt&PW_OPT_SSMLQ); int type=(pm.opt&PW_OPT_AFFIN)?'a':'s'; double det,zeta,eb;
 
   /* record base time */
   if(pflog){ gettimeofday(&tick,NULL); clc=(double)clock()/cps;
@@ -201,31 +197,32 @@ int bcpd(
   /* common: function registration */
   mf=Df?wd+sd:NULL; sd+=Df; hf=Df?wd+sd:NULL; sd+=Df;
   vf=Df?wd+sd:NULL; sd+=Df;
-  if(pm.opt&PW_OPT_NONRG){G=G1=G2=NULL; goto skip_G_alloc;}
-  /* rank restriction: double-> K x (2M+3K+D+12), int->M */
-  /*------------------------*/ G  =K?NULL:wd+sd; sd+=K?0:M*M;
-  B=K?wd+sd:NULL; sd+=K?K*D:0; G1 =K?NULL:wd+sd; sd+=K?0:M*M;
-  /*------------------------*/ G2 =K?NULL:wd+sd; sd+=K?0:M*M;
-  if(!LQ){
-    Q=K?wd+sd:NULL; sd+=M*K*(ssm?D:1);
-    L=K?wd+sd:NULL; sd+=K?K:0;
-  } else  L=Q=NULL;
+  if(pm.opt&PW_OPT_NONRG){G=G1=G2=L=Q=wdd=wld=NULL;wdi=NULL; goto skip_G_alloc;}
+  /* G: case full rank | double: 2MM (+M) */
+  G  =K?NULL:wd+sd; sd+=K?0:M*M;
+  G1 =K?NULL:wd+sd; sd+=K?0:M*M;
+  G2 =K?NULL:wd+sd; sd+=K?0:(db?M*M:0);
+  /* G: case low rank  | int: M, double: (D)MK+DM+K(2K+D+11) (+ (D)MK+K ) */
+  B  =K?wd+sd:NULL; sd+=K?K*D:0;
   wdd=K?wd+sd:NULL; sd+=K?K*(K+11):0;
   wdi=K?wi+si:NULL; si+=K?M:0;
-  wld=K?wd+sd:NULL; sd+=M*K*(ssm?D:1)+(K?M*D+2*K*K:0);
+  wld=K?wd+sd:NULL; sd+=M*K*(ssm?D:1)+K*K;
+  if(!LQ){ /* add (D)MK+K unless LQ is pre-computed */
+    Q=K?wd+sd:NULL; sd+=M*K*(ssm?D:1);
+    L=K?wd+sd:NULL; sd+=K?K:0;
+  }
   skip_G_alloc:
-  /* gaussprod */
+  /* P: gaussprod */
   if(J){id=wi+si; si+=M+N; randperm(id,M+N);}
   wgd=(J||T)?wd+sd:NULL;
   wgi=(J||T)?wi+si:NULL;
-  if(J){sd+=2*J*(1+D+Df+J);}
+  if(J){sd+=J*(1+2*(D+Df)+J);}
   if(T){sd+=2*max;si+=max*(8+mtd);}
-  /* tree */
   Tx=T?wi+si:NULL; si+=T?3*max+1:0;
   Ty=T?wi+si:NULL; si+=T?3*max+1:0;
   /* trajectory */
-  sx=(pm.opt&PW_OPT_SAVEX)?(x+D*M):NULL;
-  sy=(pm.opt&PW_OPT_SAVEY)?(y+D*M):NULL;
+  sx=(pm.opt&PW_OPT_PATHX)?(x+D*M):NULL;
+  sy=(pm.opt&PW_OPT_PATHY)?(y+D*M):NULL;
 
   /*---------------------------------------------------------------o
   |   initialization                                               |
@@ -327,7 +324,7 @@ int bcpd(
       dposv_(&uplo,&M,&D,G1,&M,E,&M,&info); if(info!=0){goto err06;}
       for(m=0;m<M;m++)for(d=0;d<D;d++) u[d+D*m]=Y[d+D*m];
       #pragma omp parallel for private (d) private (i)
-      for(m=0;m<M;m++)for(d=0;d<D;d++){u[d+D*m]=Y[d+D*m];for(i=0;i<M;i++)u[d+D*m]+=G[m+M*i]*E[i+M*d];}
+      for(m=0;m<M;m++)for(d=0;d<D;d++){u[d+D*m]=Y[d+D*m];for(i=0;i<M;i++)u[d+D*m]+=G[m+M*i]*E[i+M*d];v[d+D*m]=u[d+D*m]-Y[d+D*m];}
       if(db){tr=0;
         for(i=0;i<M;i++)for(j=i;j<M;j++) G2[i+M*j]=G2[j+M*i]=G[i+M*j];
         dpotrs_(&uplo,&M,&M,G1,&M,G2,&M,&info);if(info!=0){goto err07;}
@@ -430,48 +427,35 @@ void interpolate1(
   int *ipiv; double *lw; char type=pm.opt&PW_OPT_AFFIN?'a':'s';
 
   /* allocation */
-  W =calloc(D*M,sd); ix=calloc(D*M,sd); ipiv=calloc(D,  sd);
+  W =calloc(D*M,sd); ix=calloc(D*M,sd); ipiv=calloc(D,  si);
   E =calloc(D*M,sd); u =calloc(D*N,sd); lw  =calloc(D*D,sd);
   /* switch: non-rigid and rigid */
   if(lmd>=1e8||(pm.opt&PW_OPT_NONRG)){for(d=0;d<D;d++)for(n=0;n<N;n++){{u[d+D*n]=Y[d+D*n];}} goto skip;}
   /* non-rigid */
   cc=lmd*SQ(*r/(*s)); invlinear(ix,x,D,M,s,R,t,type,lw,ipiv);
   for(d=0;d<D;d++)for(m=0;m<M;m++) E[d+D*m]=W[m+M*d]=ix[d+D*m]-y[d+D*m];
-  if(K){ /* nystrom */
-    /* coefficient: W */
-    A=calloc(K*K,sd); L =calloc(K,sd); wd=calloc(K*(K+11),sd);
-    B=calloc(K*D,sd); U =calloc(N,si);
-    Q=calloc(M*K,sd); wi=calloc(M,si);
-    gramdecomp(Q,L,wd,wi,y,D,M,K,bet,kernel[pm.G]);
-    #pragma omp parallel for private (j) private (m) private (val)
-    for(i=0;i<K;i++)for(j=i;j<K;j++){val=(i==j?cc/L[i]:0);for(m=0;m<M;m++){val+=w[m]*Q[m+M*i]*Q[m+M*j];} A[i+K*j]=A[j+K*i]=val;}
-    for(d=0;d<D;d++)for(m=0;m<M;m++) E[d+D*m]*=w[m];
-    for(k=0;k<K;k++)for(d=0;d<D;d++){val=0;for(m=0;m<M;m++){val+=Q[m+M*k]*E[d+D*m];} B[k+K*d]=val;}
-    dposv_(&uplo,&K,&D,A,&K,B,&K,&info); assert(!info);
-    for(k=0;k<K;k++)for(m=0;m<M;m++) Q[m+M*k]*=w[m];
-    for(m=0;m<M;m++)for(d=0;d<D;d++){val=E[d+D*m];for(k=0;k<K;k++){val-=Q[m+M*k]*B[k+K*d];} W[m+M*d]=val/cc;}
-    /* interpolation */
-    randperm(U,N);
-    for(i=0;i<K;i++)for(j=i;j<K;j++) A[i+K*j]=A[j+K*i]=kernel[pm.G](Y+D*U[i],Y+D*U[j],D,bet)+(i==j?1e-6:0);
-    #pragma omp parallel for private(d) private(m) private(val)
-    for(k=0;k<K;k++)for(d=0;d<D;d++){val=0;for(m=0;m<M;m++){val+=kernel[pm.G](Y+D*U[k],y+D*m,D,bet)*W[m+M*d];} B[k+K*d]=val;}
-    dposv_(&uplo,&K,&D,A,&K,B,&K,&info); assert(!info);
-    #pragma omp parallel for collapse(2) private(k) private(val)
-    for(d=0;d<D;d++)for(n=0;n<N;n++){val=0;for(k=0;k<K;k++){val+=kernel[pm.G](Y+D*n,Y+D*U[k],D,bet)*B[k+K*d];} V[d+D*n]=val; u[d+D*n]=val+Y[d+D*n];}
-    free(A);free(Q);free(wd);free(U);
-    free(B);free(L);free(wi);
-  }
-  else { /* direct */
-    /* coefficient: W */
-    G=calloc(M*M,sd);
-    #pragma omp parallel for private (j)
-    for(i=0;i<M;i++)for(j=i;j<M;j++) G[i+M*j]=G[j+M*i]=kernel[pm.G](y+D*i,y+D*j,D,bet)+(i==j?cc/w[i]:0);
-    dposv_(&uplo,&M,&D,G,&M,W,&M,&info); assert(!info);
-    /* interpolation */
-    #pragma omp parallel for private (d) private (m) private (val)
-    for(n=0;n<N;n++)for(d=0;d<D;d++){val=0;for(m=0;m<M;m++){val+=kernel[pm.G](Y+D*n,y+D*m,D,bet)*W[m+M*d];} V[d+D*n]=val; u[d+D*n]=val+Y[d+D*n];}
-    free(G);
-  }
+  /* coefficient: W */
+  A=calloc(K*K,sd); L =calloc(K,sd); wd=calloc(K*(K+11),sd);
+  B=calloc(K*D,sd); U =calloc(N,si);
+  Q=calloc(M*K,sd); wi=calloc(M,si);
+  gramdecomp(Q,L,wd,wi,y,D,M,K,bet,kernel[pm.G]);
+  #pragma omp parallel for private (j) private (m) private (val)
+  for(i=0;i<K;i++)for(j=i;j<K;j++){val=(i==j?cc/L[i]:0);for(m=0;m<M;m++){val+=w[m]*Q[m+M*i]*Q[m+M*j];} A[i+K*j]=A[j+K*i]=val;}
+  for(d=0;d<D;d++)for(m=0;m<M;m++) E[d+D*m]*=w[m];
+  for(k=0;k<K;k++)for(d=0;d<D;d++){val=0;for(m=0;m<M;m++){val+=Q[m+M*k]*E[d+D*m];} B[k+K*d]=val;}
+  dposv_(&uplo,&K,&D,A,&K,B,&K,&info); assert(!info);
+  for(m=0;m<M;m++)for(d=0;d<D;d++){val=E[d+D*m];for(k=0;k<K;k++){val-=w[m]*Q[m+M*k]*B[k+K*d];} W[m+M*d]=val/cc;}
+  /* interpolation */
+  randperm(U,N);
+  for(i=0;i<K;i++)for(j=i;j<K;j++) A[i+K*j]=A[j+K*i]=kernel[pm.G](Y+D*U[i],Y+D*U[j],D,bet)+(i==j?1e-6:0);
+  #pragma omp parallel for private(d) private(m) private(val)
+  for(k=0;k<K;k++)for(d=0;d<D;d++){val=0;for(m=0;m<M;m++){val+=kernel[pm.G](Y+D*U[k],y+D*m,D,bet)*W[m+M*d];} B[k+K*d]=val;}
+  dposv_(&uplo,&K,&D,A,&K,B,&K,&info); assert(!info);
+  #pragma omp parallel for collapse(2) private(k) private(val)
+  for(d=0;d<D;d++)for(n=0;n<N;n++){val=0;for(k=0;k<K;k++){val+=kernel[pm.G](Y+D*n,Y+D*U[k],D,bet)*B[k+K*d];} V[d+D*n]=val; u[d+D*n]=val+Y[d+D*n];}
+  free(A);free(Q);free(wd);free(U);
+  free(B);free(L);free(wi);
+
   skip:
   for(d=0;d<D;d++)for(n=0;n<N;n++){val=0;for(i=0;i<D;i++){val+=R[d+D*i]*u[i+D*n];} T[d+D*n]=(*s)*val+t[d];}
   free(W);free(ix);free(E);free(u);free(ipiv);free(lw);
@@ -498,7 +482,7 @@ void interpolate2(
 
   int d,i,k,m,n; int D=sz.D,K=sz.K,M=sz.M; double *u,*ix,*B,*E,*wd;
   const double lmd=pm.lmd; double val; int sd=sizeof(double),si=sizeof(int);
-  const double *L=LQ,*Q=LQ+K; double *Qy; int ssm=strlen(pm.fn[COV_LQ]);
+  const double *L=LQ,*Q=LQ+K; double *Qy; int ssm=(pm.opt&PW_OPT_SSMLQ);
   int *ipiv; double *lw; char type=pm.opt&PW_OPT_AFFIN?'a':'s';
 
   assert(K);
@@ -531,34 +515,5 @@ void interpolate2(
 
   free(B); free(Qy); free(wd); free(ipiv);
   free(u); free(ix); free(E);  free(lw);
-}
-
-void interpolate_x(
-    double       *x,
-    const double *y,
-    const double *X,
-    int           D,
-    int           M,
-    int           N,
-    const double  r,
-    pwpm          pm
-  ){
-  int d,k,m,K=30; double e,val; double *p,*P; int *T,*q,*Q;
-  int me=-1; int si=sizeof(int),sd=sizeof(double);
-
-  K=K<N?K:N;
-
-  P=calloc(M*(K+1),sd); T=kdtree_build(X,D,N);
-  Q=calloc(M*(K+1),si);
-
-  #pragma omp parallel for private (q) private (p) private (d) private (e) private (k) private(val)
-  for(m=0;m<M;m++){q=Q+(K+1)*m;p=P+(K+1)*m; knnsearch(q,K,2*r,y+D*m,me,X,T,D,N);
-    if(*q){*p=0;for(k=1;k<=*q;k++){p[k]=gauss(y+D*m,X+D*q[k],D,r);*p+=p[k];}}
-    else{*p=1.0;p[1]=1.0;*q=1;nnsearch(q+1,&e,y+D*m,X,T,D,N);}
-    for(d=0;d<D;d++){val=0;for(k=1;k<=*q;k++){val+=p[k]*X[d+D*q[k]];} x[d+D*m]=val/(*p);}
-  }
-  free(P);free(Q);free(T);
-
-  return;
 }
 

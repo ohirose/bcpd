@@ -60,6 +60,7 @@ void gaussprod(
 
   if(fx) assert(fy); else assert(fy==NULL&&Df==0);
   if(tr) assert(nc==1&&U==NULL&&V==NULL);
+  assert(P==0||Q);
 
   if(P){Z=wd+sd;sd+=D*P;W=wd+sd;sd+=Df*P;K=wd+sd;sd+=P*P;E=wd+sd;sd+=P*nc;}
   /* init */
@@ -131,5 +132,4 @@ void gaussprod(
   err01: printf("ERROR: The Cholesky factorization failed at gaussprod.\n"); exit(EXIT_FAILURE);
   err02: printf("ERROR: Solving linear equations failed at gaussprod.  \n"); exit(EXIT_FAILURE);
 }
-
 

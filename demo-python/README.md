@@ -65,3 +65,35 @@ Add `--refine` to fine-tune the DLD result with BCPD.
 
 Generated BCPD files live in a temporary directory and are removed after the
 viewer closes. Missing distributed data can be supplied through `data/local`.
+
+## View saved results
+
+Run from the repository root with the Fish files installed under `data/`.
+Use the executable directly to keep the output files:
+
+```sh
+./bcpd -x data/fish-x.txt -y data/fish-y.txt -w0 -b2 -l2 -g3 -c1e-6 -n500 -r1 -o fish_
+python demo-python/viewers/view_results.py data/fish-x.txt data/fish-y.txt fish_y.txt
+python demo-python/viewers/view_results.py data/fish-x.txt data/fish-y.txt fish_y.txt --save fish.png
+```
+
+The viewer arguments are original target, original source, and final transformed
+source. It uses Matplotlib for 2D and sequential Open3D windows for 3D: close
+Before to see After. `--save` writes a static 2D/3D image without opening a window;
+`--matplotlib` offers an interactive 3D alternative.
+On Windows, replace `./bcpd` with `.\win\bcpd.exe`.
+
+## Check a synthetic Fish registration
+
+This 91-point 2D, in-sample teaching example uses known identities to measure
+before/after distances. It is not anatomical or held-out validation. The output
+folder `fish-control` must not already exist.
+
+```sh
+python demo-python/bcpd/landmark_check.py prepare data/fish-x.txt fish-control
+./bcpd -x fish-control/target.txt -y fish-control/source.txt -w0 -b2 -l2 -g3 -c1e-6 -n500 -r1 -o fish-control/fit_
+python demo-python/bcpd/landmark_check.py measure fish-control fish-control/fit_y.txt
+```
+
+Use this control's final `fit_y.txt` without reordering its rows. The identity map
+is for evaluation only; it is not supplied to BCPD.

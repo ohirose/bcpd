@@ -50,7 +50,7 @@ static sgraph* sgraph_new(int N){
 void sgraph_free(sgraph *sg){
   int n; int N=sg->N;  
   for(n=0;n<N;n++){free(sg->E[n]);free(sg->W[n]);}
-  free(sg->capa); free(sg);
+  free(sg->E); free(sg->W); free(sg->capa); free(sg);
 }
 
 
@@ -160,4 +160,3 @@ sgraph* sgraph_from_mesh(const double *Y, int D, int M, const char *file){
   err01: printf("ERROR: A edge/face definition file must contain 2 or 3 columns. Abort.\n"); exit(EXIT_FAILURE);
   err02: printf("ERROR: The minimum node index must be 0 or 1. Abort.\n");                   exit(EXIT_FAILURE);
 }
-

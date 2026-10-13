@@ -25,6 +25,8 @@
 #include"bcpd.h"
 #include"version.h"
 
+#define MAX_DIRECT_POINT_PAIRS 100000000
+
 #ifdef USE_OPENMP
 static int omp=1;
 #else
@@ -57,34 +59,45 @@ void printUsage(void){
   printf("  | ./bcpd -x <target> -y <mean> -C <shape cov: [L';Q]> (+ options)        |\n"  );
   printf("  o------------------------------------------------------------------------o\n\n");
   printf(" OPTIONS:                                                                   \n"  );
-  printf("  Model         -T <type:r,sr,n> r: rigid, sr: similar, n: nonrigid only    \n"  );
-  printf("  Parameters    -w <omega>, -l <lambda>, -g <gamma> -k <kappa>              \n"  );
-  printf("  Acceleration  -J <rank:P>, -K <rank:G>, kdtree: -p, -r <seed>             \n"  );
+  printf("  Model         -T <type:srn,an,a,sr,r,n> (default: srn)                   \n"  );
+  printf("                s: scale, r: rigid, n: nonrigid, a: affine                 \n"  );
+  printf("  Parameters    -w <omega>, -l <lambda>, -g <gamma>, -k <kappa>            \n"  );
+  printf("  Functional    -j <eta>, -U <type:e,x,y,n> (DET only)                     \n"  );
+  printf("  Acceleration  -A (= -J300 -K100 -p), -J <rank:P>, -K <rank:G>            \n"  );
+  printf("                kdtree: -p, -r <seed>                                      \n"  );
+  printf("  KD tree       -d <factor>, -e <radius:max>, -f <sigma:switch>            \n"  );
   printf("  Downsampling  -D <type:x,y,b,X,Y,B, #points, radius>.                     \n"  );
   printf("  Kernel                                                                    \n"  );
-  printf("    Standard:   -G <type:1,2,3> -b <beta>                                   \n"  );
+  printf("    Standard:   -G <type:0,1,2,3> -b <beta> (0: Gaussian, default)         \n"  );
   printf("    Geodesic:   -G'geo,<tau>,<triangles>'  | geo-kernel with a mesh         \n"  );
   printf("                -G'geo,<tau>,<nnk>,<nnr>'  | geo-kernel without a mesh      \n"  );
   printf("                -b <beta>, -z <epsilon>, -K <rank:G>                        \n"  );
   printf("  Convergence   -n <#loops:max>, -N <#loops:min>, -c <tolerance>            \n"  );
-  printf("  Normalization -u <type;e,x,y,n>                                           \n"  );
-  printf("  File Output   -o <prefix>, -s <variables:y,x,v,a,c,e,T,P,Y,A(=all)>       \n"  );
+  printf("  Normalization -u <type:e,x,y,n>                                          \n"  );
+  printf("  File Output   -o <prefix>, -s <variables:y,x,v,a,c,e,T,P,Y,t,A(=all)>    \n"  );
   printf("  Terminal I/O  quiet mode: -q, history mode: -h, warning-disabled mode: -W \n\n");
   printf("  *1) Parenthesis <...> specifies the argument of an option.                \n"  );
-  printf("  *2) The downsampling option enables DET++/BCPD++/GBCPD++.                 \n\n");
+  printf("  *2) Source downsampling enables interpolation (DET++/BCPD++/GBCPD++).    \n"  );
+  printf("      Nonrigid interpolation requires positive rank (-K, or -C for DLD).   \n"  );
+  printf("  *3) -sa saves alpha.txt; affine -sT saves A.txt and t.txt.               \n"  );
+  printf("      P is approximate and thresholded; x/P/c/e support downsampling.      \n"  );
+  printf("      -st saves per-loop timing/sigma; y/comptime/info are always saved.    \n\n");
   printf(" DEFAULT:                                                                   \n"  );
   printf("  -x X.txt, -y Y.txt, -w 0, -l 2, -b 2, -n 500, -o output_, -c 1e-4, -u e   \n"  );
-  printf("  ** All accleration options are disabled unless specified explicitly.      \n\n");
+  printf("  -Tsrn, -G0, -d7, -e0.15, -f0.2 (DET: -f0.35)                             \n"  );
+  printf("  ** For -Tr/-Ta, -ue is changed to -uy.                                   \n"  );
+  printf("  ** All acceleration options are disabled unless specified explicitly.    \n\n");
   printf(" EXAMPLE:                                                                   \n"  );
   printf("  o------------------------------------------------------------------------o\n"  );
   printf("  | ./bcpd -x X.txt -y Y.txt -w0.1 -l2 -b2 -J300 -K80 -p -n90 -c1e-6 -svYP |\n"  );
   printf("  o------------------------------------------------------------------------o\n\n");
   printf(" REFERENCE:                                                                 \n"  );
-  printf(" - Function registration: Domain elastic transform, under review, (DET).    \n"  );
+  printf(" - Domain Elastic Transform: Bayesian Function Registration for            \n"  );
+  printf("   High-Dimensional Scientific Data, IEEE TPAMI, 2026 (DET).                \n"  );
   printf(" - Geodesic-based Bayesian coherent point drift, IEEE TPAMI, 2023 (GBCPD).  \n"  );
   printf(" - A Bayesian formulation of coherent point drift, IEEE TPAMI, 2021 (BCPD). \n"  );
-  printf(" - Accleelration of non-rigid point set registration with downsampling and  \n"  );
-  printf("   Gaussian process regression, IEEE TPAMI, 2021 (BCDP++).                  \n\n");
+  printf(" - Acceleration of non-rigid point set registration with downsampling and  \n"  );
+  printf("   Gaussian process regression, IEEE TPAMI, 2021 (BCPD++).                  \n\n");
   printf(" CONTACT:                                                                   \n"  );
   printf(" - Please email to the following address if you have any questions:         \n"  );
   printf("   ohirose%s%s%s%s (Osamu Hirose) %s",".univ","+bcpd","@","gmail.com",     "\n\n");
@@ -93,12 +106,10 @@ void printUsage(void){
 
 static char warning[6][1024]= {
     "  o--- !!! WARNING !!! ------------------------------------------------o\n"
-    "  |  The numbers of points in both point sets are large. The execution |\n"
-    "  |  will be considerably slow. Please use options, -J, -K, -p, and -D |\n"
-    "  |  for accelerating the execution. For more detail, please read the  |\n"
-    "  |  README.md file.                                                   |\n"
-    "  o--------------------------------------------------------------------o\n\n"
-    "  Do you want to continue the execution? [y/n] -- ",
+    "  |  Exact correspondence computation will process more than 100      |\n"
+    "  |  million point pairs per iteration. Consider using -J with -p,    |\n"
+    "  |  or use -D to reduce the effective point-set sizes.                |\n"
+    "  o--------------------------------------------------------------------o\n",
     "  o--- !!! WARNING !!! ------------------------------------------------o\n"
     "  |  The Nystrom option for computing P, i.e., '-J', is turned on, but |\n"
     "  |  '-p' is disabled. The computation will be quite inaccurate. The   |\n"
@@ -132,21 +143,18 @@ static char warning[6][1024]= {
     "  o--------------------------------------------------------------------o\n",
 };
 
-static void yesno(void){
-  char c; int n; n=scanf("%c",&c); if(n==0||(c!='y'&&c!='Y')){fprintf(stderr,"  Abort.\n\n"); exit(EXIT_SUCCESS);}
-}
-
 void printInfo(pwsz sz, pwpm pm){ int flag;
   char stype[4][32]={"random sampling","inverse density","voxel grid","grid variance"};
-  int nx,ny; double rx,ry,vep; char model[64],algo[64];
+  int M,N,nx,ny; double rx,ry,vep; char model[64],algo[64];
   nx=pm.dwn[TARGET]; rx=pm.dwr[TARGET]; vep=pm.vep;
   ny=pm.dwn[SOURCE]; ry=pm.dwr[SOURCE];
+  M=ny?ny:sz.M; N=nx?nx:sz.N;
 
   fprintf(stderr,"\n  BCPD/DET/DLD version %s (%s). OpenMP: %s.\n",_VERSION_,_DATE_,omp?"Turned on":"Not used");
   /* warning */
   if(pm.opt&PW_OPT_NWARN) goto skip;
-  flag=sz.M>=4000&&sz.N>=4000&&nx==0&&ny==0&&sz.J==0&&sz.K==0;
-  if(flag){fprintf(stderr,"\n%s",warning[0]);yesno();}
+  flag=pm.J==0&&M>0&&N>MAX_DIRECT_POINT_PAIRS/M;
+  if(flag){fprintf(stderr,"\n%s",warning[0]);}
   if(pm.J&&!(pm.opt&PW_OPT_LOCAL))         {fprintf(stderr,"\n%s",warning[1]);}
   if(pm.J&&pm.J<150&&sz.M>=200&&sz.N>=200) {fprintf(stderr,"\n%s",warning[2]);}
   if(pm.K&&pm.K< 10&&sz.M>=100&&sz.N>=100) {fprintf(stderr,"\n%s",warning[3]);}
@@ -293,10 +301,10 @@ void printInfo(pwsz sz, pwpm pm){ int flag;
   if(pm.opt&PW_OPT_SAVEY) fprintf(stderr," y");
   if(pm.opt&PW_OPT_SAVEX) fprintf(stderr,",x");
   if(pm.opt&PW_OPT_SAVEV) fprintf(stderr,",v");
-  if(pm.opt&PW_OPT_SAVEA) fprintf(stderr,",a");
+  if(pm.opt&PW_OPT_SAVEA) fprintf(stderr,",alpha");
   if(pm.opt&PW_OPT_SAVEC) fprintf(stderr,",c");
   if(pm.opt&PW_OPT_SAVEE) fprintf(stderr,",e");
-  if(pm.opt&PW_OPT_SAVET) fprintf(stderr,",s,R,t");
+  if(pm.opt&PW_OPT_SAVET) fprintf(stderr,(pm.opt&PW_OPT_AFFIN)?",A,t":",s,R,t");
   if(pm.opt&PW_OPT_SAVEP) fprintf(stderr,",P");
   fprintf(stderr,"\n\n");
 }

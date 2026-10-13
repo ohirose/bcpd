@@ -24,7 +24,7 @@ else ifeq ($(findstring MINGW,$(UNAME_S)),MINGW)
     # MinGW-w64 on Windows (e.g., MSYS2)
     CC := x86_64-w64-mingw32-gcc
     CFLAGS += -fopenmp -DMINGW64
-    LDFLAGS += -lopenblas -lm -static
+    LDFLAGS += -lopenblas -lgfortran -lquadmath -lm -static
     OUTDIR := ./win
 else
     # Assume Linux

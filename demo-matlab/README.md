@@ -20,7 +20,7 @@ various examples.
 ## Shape transfer
 Bash scripts in `shapeTransfer` will demonstrate
 several examples without MATLAB.  Please check
-output files named `transferV[1/2]_y.interpolated.obj`
+output files named `transferV1_y.obj` and `transferV2_y.obj`
 after executing a script.
 
 ## Notes

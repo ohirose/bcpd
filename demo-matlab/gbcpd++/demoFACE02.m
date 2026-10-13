@@ -23,7 +23,7 @@ tau ='.5';
 kern=sprintf('geodesic,%s,%s',tau,fnf);
 prm1=sprintf('-w%s -b%s -l%s -g%s',omg,bet,lmd,gma);
 prm2=sprintf('-J%s -K%s -p -u%s -D%s',J,K,nrm,dwn);
-prm3=sprintf('-c%s -n%s -h -r2',c,n);
+prm3=sprintf('-c%s -n%s -h -r1',c,n);
 cmd =sprintf('%s -x%s -y%s %s %s %s -ux -G%s',bcpd,x,y,prm1,prm2,prm3,kern);
 system(cmd);
 
